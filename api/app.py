@@ -9,7 +9,13 @@ from sklearn.pipeline import Pipeline
 st.set_page_config(page_title="ML Regression App", layout="wide")
 
 # =========================
-# LOGIN
+# SESSION LOGIN STATE
+# =========================
+if "login" not in st.session_state:
+    st.session_state["login"] = False
+
+# =========================
+# LOGIN FUNCTION
 # =========================
 def login():
     st.title("🔐 Login")
@@ -19,15 +25,26 @@ def login():
     if st.button("Login"):
         if user == "admin" and pwd == "1234":
             st.session_state["login"] = True
+            st.rerun()
         else:
             st.error("Invalid credentials")
 
-if "login" not in st.session_state:
-    st.session_state["login"] = False
+# =========================
+# LOGOUT BUTTON
+# =========================
+def logout_button():
+    if st.sidebar.button("🚪 Logout"):
+        st.session_state["login"] = False
+        st.rerun()
 
+# =========================
+# STOP IF NOT LOGIN
+# =========================
 if not st.session_state["login"]:
     login()
     st.stop()
+
+logout_button()
 
 # =========================
 # LOAD MODEL
@@ -40,7 +57,7 @@ model = load_model()
 st.title("📊 Engagement Prediction App (Regression)")
 
 # =========================
-# AUTO DETECT PIPELINE STRUCTURE
+# INSPECT PIPELINE
 # =========================
 def inspect_pipeline(model):
 
@@ -56,43 +73,31 @@ def inspect_pipeline(model):
 
                 for name, transformer, cols in step.transformers_:
 
-                    # numeric
-                    if "num" in name.lower():
-                        numeric_cols.extend(cols)
-
                     # categorical encoder
-                    if hasattr(transformer, "categories_"):
-                        categorical_cols.extend(cols)
-
-                        for c, cats in zip(cols, transformer.categories_):
-                            category_map[c] = list(cats)
-
-                    # pipeline inside columntransformer
                     if isinstance(transformer, Pipeline):
                         last = transformer.steps[-1][1]
+                    else:
+                        last = transformer
 
-                        if hasattr(last, "categories_"):
-                            categorical_cols.extend(cols)
-
-                            for c, cats in zip(cols, last.categories_):
-                                category_map[c] = list(cats)
-
-                        else:
-                            numeric_cols.extend(cols)
+                    if hasattr(last, "categories_"):
+                        categorical_cols.extend(cols)
+                        for c, cats in zip(cols, last.categories_):
+                            category_map[c] = list(cats)
+                    else:
+                        numeric_cols.extend(cols)
 
     return numeric_cols, categorical_cols, category_map
 
-
 numeric_cols, categorical_cols, category_map = inspect_pipeline(model)
 
-# fallback kalau model bukan pipeline
+# fallback
 if hasattr(model, "feature_names_in_"):
     all_cols = list(model.feature_names_in_)
 else:
     all_cols = numeric_cols + categorical_cols
 
 # =========================
-# SIDEBAR
+# SIDEBAR MODE
 # =========================
 st.sidebar.header("Input Mode")
 mode = st.sidebar.radio("Choose input method", ["Manual Input", "Upload CSV"])
@@ -107,11 +112,8 @@ if mode == "Manual Input":
 
     for col in all_cols:
 
-        # categorical auto from encoder
         if col in category_map:
             input_data[col] = st.selectbox(col, category_map[col])
-
-        # numeric auto
         else:
             input_data[col] = st.number_input(col, value=0.0)
 
@@ -119,16 +121,27 @@ if mode == "Manual Input":
 
         df = pd.DataFrame([input_data])
         pred = model.predict(df)[0]
-
         st.success(f"Predicted Value: {round(float(pred),4)}")
 
 # =========================
-# CSV UPLOAD
+# CSV UPLOAD + TEMPLATE
 # =========================
 if mode == "Upload CSV":
 
     st.header("Upload CSV for Batch Prediction")
-    file = st.file_uploader("Upload file", type=["csv"])
+
+    # TEMPLATE CSV
+    template_df = pd.DataFrame(columns=all_cols)
+    csv_template = template_df.to_csv(index=False)
+
+    st.download_button(
+        "⬇ Download CSV Template",
+        csv_template,
+        "template_input.csv",
+        "text/csv"
+    )
+
+    file = st.file_uploader("Upload CSV", type=["csv"])
 
     if file:
         df = pd.read_csv(file)
@@ -142,9 +155,7 @@ if mode == "Upload CSV":
             st.success("Prediction done")
             st.dataframe(df)
 
-            # =========================
             # DISTRIBUTION GRAPH
-            # =========================
             st.subheader("Prediction Distribution")
 
             fig, ax = plt.subplots()
@@ -155,7 +166,7 @@ if mode == "Upload CSV":
             st.pyplot(fig)
 
             st.download_button(
-                "Download Result",
+                "Download Result CSV",
                 df.to_csv(index=False),
                 "prediction.csv",
                 "text/csv"
