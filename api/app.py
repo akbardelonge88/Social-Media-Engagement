@@ -71,7 +71,7 @@ def login():
 
         .stTextInput input {
             background-color: rgba(255,255,255,0.08);
-            color: white;
+            color: black;
             border-radius: 10px;
             border: 1px solid rgba(255,255,255,0.15);
         }
@@ -318,5 +318,6 @@ if mode == "Manual Input":
     except Exception as e:
         st.warning("Feature importance could not be extracted.")
         st.text(e)
+
 
 
