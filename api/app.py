@@ -22,35 +22,29 @@ def login():
     st.markdown("""
         <style>
 
-        /* ===== HIDE STREAMLIT HEADER ===== */
         header {visibility: hidden;}
         [data-testid="stHeader"] {display: none;}
 
-        /* ===== BACKGROUND ===== */
         .stApp {
             background: linear-gradient(135deg, #0f172a, #1e293b, #020617);
             background-attachment: fixed;
         }
 
-        /* ===== GLOBAL SPACING ===== */
         .main > div {
             padding-top: 1rem;
         }
 
-        /* ===== COLUMN ALIGNMENT ===== */
         div[data-testid="column"] {
             display: flex;
             align-items: center;
         }
 
-        /* ===== LOGO ===== */
         .logo-container {
             display: flex;
             justify-content: center;
             width: 100%;
         }
 
-        /* ===== HERO TEXT ===== */
         .hero-title {
             text-align: center;
             color: white;
@@ -66,19 +60,15 @@ def login():
             margin-bottom: 35px;
         }
 
-        /* ===== GLASS CARD ===== */
         .login-card {
             background: rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
             padding: 45px;
             border-radius: 18px;
             border: 1px solid rgba(255, 255, 255, 0.12);
             box-shadow: 0 8px 40px rgba(0,0,0,0.35);
-            width: 100%;
         }
 
-        /* ===== INPUT ===== */
         .stTextInput input {
             background-color: rgba(255,255,255,0.08);
             color: white;
@@ -90,7 +80,6 @@ def login():
             color: rgba(255,255,255,0.7);
         }
 
-        /* ===== NEON BUTTON ===== */
         .stButton button {
             background: linear-gradient(90deg, #22d3ee, #6366f1);
             color: white;
@@ -98,7 +87,6 @@ def login():
             border-radius: 12px;
             padding: 12px;
             font-weight: 600;
-            font-size: 15px;
             box-shadow: 0 0 18px rgba(99,102,241,0.7);
             transition: 0.3s;
         }
@@ -111,7 +99,6 @@ def login():
         </style>
     """, unsafe_allow_html=True)
 
-    # ===== HERO TEXT =====
     st.markdown("""
         <div class='hero-title'>Welcome Back!</div>
         <div class='hero-subtitle'>Sign in to continue to Hexamind</div>
@@ -119,20 +106,18 @@ def login():
 
     col1, col2 = st.columns([1.2, 1])
 
-    # ===== LEFT LOGO =====
     with col1:
         st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
         st.image("login.png", width=380)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # ===== RIGHT LOGIN CARD =====
     with col2:
         st.markdown("<div class='login-card'>", unsafe_allow_html=True)
 
-        user = st.text_input("User Name")
-        pwd = st.text_input("Password", type="password")
+        user = st.text_input("User Name", key="login_user")
+        pwd = st.text_input("Password", type="password", key="login_pwd")
 
-        if st.button("Login", use_container_width=True):
+        if st.button("Login", use_container_width=True, key="login_btn"):
             if user == "admin" and pwd == "1234":
                 st.session_state["login"] = True
                 st.rerun()
@@ -142,7 +127,7 @@ def login():
         st.markdown("</div>", unsafe_allow_html=True)
 
 
-# ===== APP FLOW =====
+# ===== SESSION STATE =====
 if "login" not in st.session_state:
     st.session_state["login"] = False
 
@@ -361,6 +346,7 @@ if mode == "Manual Input":
         st.warning("Feature importance could not be extracted.")
 
         st.text(e)
+
 
 
 
