@@ -3,7 +3,11 @@ import pandas as pd
 import numpy as np
 import joblib
 import matplotlib.pyplot as plt
-import shap
+try:
+    import shap
+    SHAP_AVAILABLE = True
+except:
+    SHAP_AVAILABLE = False
 
 st.set_page_config(page_title="AI Engagement Predictor", layout="wide")
 
@@ -131,16 +135,20 @@ if mode == "Manual Input":
 
         # SHAP
         st.subheader("Explainability")
-        try:
-            X_proc = preprocessor.transform(df)
-            explainer = shap.Explainer(final_model)
-            shap_values = explainer(X_proc)
+        if SHAP_AVAILABLE:
+            try:
+                X_proc = preprocessor.transform(df)
+                explainer = shap.Explainer(final_model)
+                shap_values = explainer(X_proc)
 
-            fig = plt.figure()
-            shap.plots.waterfall(shap_values[0], show=False)
-            st.pyplot(fig)
-        except:
-            st.info("SHAP unavailable")
+                fig = plt.figure()
+                shap.plots.waterfall(shap_values[0], show=False)
+                st.pyplot(fig)
+
+            except Exception as e:
+                st.info("SHAP calculation failed")
+        else:
+            st.info("SHAP library not installed")
 
 # ================= CSV MODE =================
 if mode == "Upload CSV":
