@@ -126,16 +126,6 @@ def login():
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-
-# ===== SESSION STATE =====
-if "login" not in st.session_state:
-    st.session_state["login"] = False
-
-if not st.session_state["login"]:
-    login()
-else:
-    st.success("Login berhasil bro 😎")
-
 # =========================
 # LOGOUT BUTTON
 # =========================
@@ -173,14 +163,10 @@ def inspect_pipeline(model):
     category_map = {}
 
     if isinstance(model, Pipeline):
-
         for step_name, step in model.steps:
-
             if isinstance(step, ColumnTransformer):
-
                 for name, transformer, cols in step.transformers_:
 
-                    # categorical encoder
                     if isinstance(transformer, Pipeline):
                         last = transformer.steps[-1][1]
                     else:
@@ -197,7 +183,6 @@ def inspect_pipeline(model):
 
 numeric_cols, categorical_cols, category_map = inspect_pipeline(model)
 
-# fallback
 if hasattr(model, "feature_names_in_"):
     all_cols = list(model.feature_names_in_)
 else:
@@ -210,21 +195,17 @@ st.sidebar.header("Input Mode")
 mode = st.sidebar.radio("Choose input method", ["Manual Input", "Upload CSV"])
 
 # =========================
-# MANUAL INPUT (2 COLUMNS)
+# MANUAL INPUT
 # =========================
 if mode == "Manual Input":
 
     st.header("Manual Input Form")
 
-    # urutan sesuai request lo
     ordered_cols = [
-        "day_of_week","hour",
-        "platform","text_length",
-        "topic_category","hashtag_count",
-        "emotion_type","mention_count",
-        "campaign_phase","sentiment_score",
-        "impressions","toxicity_score",
-        "month"
+        "day_of_week","hour","platform","text_length",
+        "topic_category","hashtag_count","emotion_type",
+        "mention_count","campaign_phase","sentiment_score",
+        "impressions","toxicity_score","month"
     ]
 
     col_left, col_right = st.columns(2)
@@ -235,7 +216,6 @@ if mode == "Manual Input":
         target_col = col_left if i % 2 == 0 else col_right
 
         with target_col:
-
             if col in category_map:
                 input_data[col] = st.selectbox(col, category_map[col])
             else:
@@ -247,13 +227,12 @@ if mode == "Manual Input":
         st.success(f"Predicted Value: {round(float(pred),4)}")
 
 # =========================
-# CSV UPLOAD + TEMPLATE
+# UPLOAD CSV
 # =========================
 if mode == "Upload CSV":
 
     st.header("Upload CSV for Batch Prediction")
 
-    # TEMPLATE CSV
     template_df = pd.DataFrame(columns=all_cols)
     csv_template = template_df.to_csv(index=False)
 
@@ -278,14 +257,9 @@ if mode == "Upload CSV":
             st.success("Prediction done")
             st.dataframe(df)
 
-            # DISTRIBUTION GRAPH
-            st.subheader("Prediction Distribution")
-
             fig, ax = plt.subplots()
             ax.hist(preds, bins=20)
             ax.set_title("Distribution of Predicted Values")
-            ax.set_xlabel("Prediction")
-            ax.set_ylabel("Frequency")
             st.pyplot(fig)
 
             st.download_button(
@@ -295,57 +269,6 @@ if mode == "Upload CSV":
                 "text/csv"
             )
 
-# =========================
-# FEATURE IMPORTANCE (ONLY MANUAL INPUT PAGE)
-# =========================
-if mode == "Manual Input":
-
-    st.header("Feature Importance")
-
-    try:
-        # ambil model terakhir
-        if hasattr(model, "named_steps"):
-            final_model = list(model.named_steps.values())[-1]
-        else:
-            final_model = model
-
-        if hasattr(final_model, "feature_importances_"):
-
-            importance = final_model.feature_importances_
-
-            # ambil nama fitur dari pipeline kalau ada
-            feature_names = None
-
-            if hasattr(model, "named_steps"):
-                for step in model.named_steps.values():
-                    if hasattr(step, "get_feature_names_out"):
-                        feature_names = step.get_feature_names_out()
-                        break
-
-            if feature_names is None:
-                feature_names = [f"feature_{i}" for i in range(len(importance))]
-
-            fi = pd.DataFrame({
-                "Feature": feature_names,
-                "Importance": importance
-            }).sort_values("Importance", ascending=False).head(20)
-
-            fig, ax = plt.subplots(figsize=(8,6))
-            ax.barh(fi["Feature"], fi["Importance"])
-            ax.invert_yaxis()
-            ax.set_title("Top Feature Importance")
-            ax.set_xlabel("Importance Score")
-            plt.tight_layout()
-
-            st.pyplot(fig)
-
-        else:
-            st.info("Model does not support feature importance.")
-
-    except Exception as e:
-        st.warning("Feature importance could not be extracted.")
-
-        st.text(e)
 
 
 
