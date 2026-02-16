@@ -40,7 +40,7 @@ def login():
     col1, col2 = st.columns([1.2,1])
 
     # LEFT IMAGE
-    with col1:
+    with col2:
         st.image("login.png", use_container_width=True)
 
     # RIGHT LOGIN CARD
@@ -49,7 +49,7 @@ def login():
 
         st.markdown("## 🔐 LOGIN")
 
-        user = st.text_input("Email")
+        user = st.text_input("Username")
         pwd = st.text_input("Password", type="password")
 
         if st.button("Login", use_container_width=True):
@@ -270,4 +270,5 @@ try:
 
 except Exception as e:
     st.warning("Feature importance could not be extracted.")
+
     st.text(e)
