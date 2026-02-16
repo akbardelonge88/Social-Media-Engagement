@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="ML Prediction App", layout="wide")
 
 # =========================
-# SIMPLE LOGIN SYSTEM
+# LOGIN
 # =========================
 def login():
     st.title("🔐 Login")
@@ -39,12 +39,22 @@ model = load_model()
 st.title("📊 Engagement Prediction App")
 
 # =========================
-# AUTO DETECT FEATURES
+# DIMENSION VALUES (DARI SCRIPT LO TADI)
+# =========================
+DIMENSIONS = {
+    "day_of_week": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+    "platform": ["YouTube","Twitter","Reddit","Instagram","Facebook"],
+    "topic_category": ["Pricing","Returns","Product","Delivery","Marketing","Support"],
+    "emotion_type": ["Sad","Happy","Confused","Excited","Angry"],
+    "campaign_phase": ["Pre-Launch","Launch","Post-Launch"]
+}
+
+# =========================
+# FEATURE DETECTION
 # =========================
 if hasattr(model, "feature_names_in_"):
     features = list(model.feature_names_in_)
 else:
-    st.warning("Model has no feature_names_in_. Using manual input.")
     features = []
 
 st.sidebar.header("Input Mode")
@@ -56,11 +66,17 @@ mode = st.sidebar.radio("Choose input method", ["Manual Input", "Upload CSV"])
 if mode == "Manual Input":
 
     st.header("Manual Input Form")
-
     input_data = {}
 
     for col in features:
-        input_data[col] = st.number_input(f"{col}", value=0.0)
+
+        # kalau feature termasuk dimensi kategorikal
+        if col in DIMENSIONS:
+            input_data[col] = st.selectbox(col, DIMENSIONS[col])
+
+        # selain itu numeric
+        else:
+            input_data[col] = st.number_input(col, value=0.0)
 
     if st.button("Predict"):
         df = pd.DataFrame([input_data])
@@ -84,7 +100,6 @@ if mode == "Manual Input":
 if mode == "Upload CSV":
 
     st.header("Upload CSV for Batch Prediction")
-
     file = st.file_uploader("Upload file", type=["csv"])
 
     if file:
@@ -117,6 +132,7 @@ st.header("Feature Importance")
 
 if hasattr(model, "feature_importances_"):
     importance = model.feature_importances_
+
     fi = pd.DataFrame({
         "Feature": features,
         "Importance": importance
