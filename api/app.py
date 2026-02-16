@@ -153,13 +153,6 @@ if not st.session_state["login"]:
 
 logout_button()
 
-# COPYRIGHT SIDEBAR
-st.sidebar.markdown("""
----
-© 2026 Hexamind  
-All Rights Reserved
-""")
-
 # =========================
 # LOAD MODEL
 # =========================
@@ -335,6 +328,18 @@ if mode == "Manual Input":
     except Exception as e:
         st.warning("Feature importance could not be extracted.")
         st.text(e)
+        
+# =========================
+# COPYRIGHT FOOTER
+# =========================
+st.markdown("""
+<hr style='margin-top:50px;margin-bottom:10px'>
+<div style='text-align:center;
+            font-size:12px;
+            color:gray;'>
+    © 2026 Hexamind. All Rights Reserved
+</div>
+""", unsafe_allow_html=True)
 
 
 
