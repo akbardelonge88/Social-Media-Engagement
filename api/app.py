@@ -126,6 +126,16 @@ def login():
 
         st.markdown("</div>", unsafe_allow_html=True)
 
+# COPYRIGHT LOGIN
+    st.markdown("""
+        <div style='text-align:center;
+                    margin-top:30px;
+                    font-size:12px;
+                    color:rgba(255,255,255,0.5);'>
+            © 2026 Hexamind. All Rights Reserved
+        </div>
+    """, unsafe_allow_html=True)
+
 # =========================
 # LOGOUT BUTTON
 # =========================
@@ -318,6 +328,7 @@ if mode == "Manual Input":
     except Exception as e:
         st.warning("Feature importance could not be extracted.")
         st.text(e)
+
 
 
 
