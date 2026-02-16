@@ -3,15 +3,20 @@ import pandas as pd
 import numpy as np
 import joblib
 import matplotlib.pyplot as plt
-try:
-    import shap
-    SHAP_AVAILABLE = True
-except:
-    SHAP_AVAILABLE = False
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
 
-st.set_page_config(page_title="AI Engagement Predictor", layout="wide")
+st.set_page_config(page_title="ML Regression App", layout="wide")
 
-# ================= LOGIN SYSTEM =================
+# =========================
+# SESSION LOGIN STATE
+# =========================
+if "login" not in st.session_state:
+    st.session_state["login"] = False
+
+# =========================
+# LOGIN FUNCTION
+# =========================
 def login():
     st.title("🔐 Login")
     user = st.text_input("Username")
@@ -20,199 +25,189 @@ def login():
     if st.button("Login"):
         if user == "admin" and pwd == "1234":
             st.session_state["login"] = True
+            st.rerun()
         else:
             st.error("Invalid credentials")
 
-if "login" not in st.session_state:
-    st.session_state["login"] = False
+# =========================
+# LOGOUT BUTTON
+# =========================
+def logout_button():
+    if st.sidebar.button("🚪 Logout"):
+        st.session_state["login"] = False
+        st.rerun()
 
+# =========================
+# STOP IF NOT LOGIN
+# =========================
 if not st.session_state["login"]:
     login()
     st.stop()
 
-# logout button
-col1, col2 = st.columns([8,1])
-with col2:
-    if st.button("Logout"):
-        st.session_state["login"] = False
-        st.rerun()
+logout_button()
 
-# ================= LOAD MODEL =================
+# =========================
+# LOAD MODEL
+# =========================
 @st.cache_resource
 def load_model():
     return joblib.load("model.pkl")
 
 model = load_model()
+st.title("📊 Engagement Prediction App (Regression)")
 
-st.title("📊 AI Engagement Prediction Dashboard")
+# =========================
+# INSPECT PIPELINE
+# =========================
+def inspect_pipeline(model):
 
-# ================= HELPER PIPELINE =================
-def unpack_pipeline(model):
-    if hasattr(model, "named_steps"):
-        final_model = list(model.named_steps.values())[-1]
-        preprocessor = None
-        for k in model.named_steps:
-            if "preprocess" in k.lower() or "transform" in k.lower():
-                preprocessor = model.named_steps[k]
-        return final_model, preprocessor
-    return model, None
+    numeric_cols = []
+    categorical_cols = []
+    category_map = {}
 
-final_model, preprocessor = unpack_pipeline(model)
+    if isinstance(model, Pipeline):
 
-# ================= TEMPLATE CSV =================
-template_cols = [
-    "day_of_week","platform","topic_category","emotion_type","campaign_phase",
-    "followers","likes","comments","shares"
-]
-template_df = pd.DataFrame(columns=template_cols)
+        for step_name, step in model.steps:
 
-st.sidebar.download_button(
-    "⬇ Download CSV Template",
-    template_df.to_csv(index=False),
-    "template.csv",
-    "text/csv"
-)
+            if isinstance(step, ColumnTransformer):
 
-mode = st.sidebar.radio("Input Mode", ["Manual Input", "Upload CSV"])
+                for name, transformer, cols in step.transformers_:
 
-# ================= MANUAL INPUT =================
+                    # categorical encoder
+                    if isinstance(transformer, Pipeline):
+                        last = transformer.steps[-1][1]
+                    else:
+                        last = transformer
+
+                    if hasattr(last, "categories_"):
+                        categorical_cols.extend(cols)
+                        for c, cats in zip(cols, last.categories_):
+                            category_map[c] = list(cats)
+                    else:
+                        numeric_cols.extend(cols)
+
+    return numeric_cols, categorical_cols, category_map
+
+numeric_cols, categorical_cols, category_map = inspect_pipeline(model)
+
+# fallback
+if hasattr(model, "feature_names_in_"):
+    all_cols = list(model.feature_names_in_)
+else:
+    all_cols = numeric_cols + categorical_cols
+
+# =========================
+# SIDEBAR MODE
+# =========================
+st.sidebar.header("Input Mode")
+mode = st.sidebar.radio("Choose input method", ["Manual Input", "Upload CSV"])
+
+# =========================
+# MANUAL INPUT
+# =========================
 if mode == "Manual Input":
 
-    st.header("Manual Input")
+    st.header("Manual Input Form")
+    input_data = {}
 
-    col1, col2 = st.columns(2)
+    for col in all_cols:
 
-    with col1:
-        day = st.selectbox("day_of_week",
-            ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"])
-
-        platform = st.selectbox("platform",
-            ["YouTube","Twitter","Reddit","Instagram","Facebook"])
-
-        topic = st.selectbox("topic_category",
-            ["Pricing","Returns","Product","Delivery","Marketing","Support"])
-
-    with col2:
-        emotion = st.selectbox("emotion_type",
-            ["Sad","Happy","Confused","Excited","Angry"])
-
-        phase = st.selectbox("campaign_phase",
-            ["Pre-Launch","Launch","Post-Launch"])
-
-    followers = st.number_input("followers",0)
-    likes = st.number_input("likes",0)
-    comments = st.number_input("comments",0)
-    shares = st.number_input("shares",0)
+        if col in category_map:
+            input_data[col] = st.selectbox(col, category_map[col])
+        else:
+            input_data[col] = st.number_input(col, value=0.0)
 
     if st.button("Predict"):
 
-        df = pd.DataFrame([{
-            "day_of_week":day,
-            "platform":platform,
-            "topic_category":topic,
-            "emotion_type":emotion,
-            "campaign_phase":phase,
-            "followers":followers,
-            "likes":likes,
-            "comments":comments,
-            "shares":shares
-        }])
-
+        df = pd.DataFrame([input_data])
         pred = model.predict(df)[0]
-        st.success(f"Predicted Engagement: {round(pred,3)}")
+        st.success(f"Predicted Value: {round(float(pred),4)}")
 
-        # probability-style distribution
-        preds = []
-        for i in range(50):
-            noise = df.copy()
-            noise["likes"] += np.random.randint(-5,5)
-            preds.append(model.predict(noise)[0])
-
-        fig, ax = plt.subplots()
-        ax.hist(preds, bins=20)
-        ax.set_title("Prediction Distribution")
-        st.pyplot(fig)
-
-        # SHAP
-        st.subheader("Explainability")
-        if SHAP_AVAILABLE:
-            try:
-                X_proc = preprocessor.transform(df)
-                explainer = shap.Explainer(final_model)
-                shap_values = explainer(X_proc)
-
-                fig = plt.figure()
-                shap.plots.waterfall(shap_values[0], show=False)
-                st.pyplot(fig)
-
-            except Exception as e:
-                st.info("SHAP calculation failed")
-        else:
-            st.info("SHAP library not installed")
-
-# ================= CSV MODE =================
+# =========================
+# CSV UPLOAD + TEMPLATE
+# =========================
 if mode == "Upload CSV":
 
-    st.header("Batch Prediction")
+    st.header("Upload CSV for Batch Prediction")
 
-    file = st.file_uploader("Upload CSV")
+    # TEMPLATE CSV
+    template_df = pd.DataFrame(columns=all_cols)
+    csv_template = template_df.to_csv(index=False)
+
+    st.download_button(
+        "⬇ Download CSV Template",
+        csv_template,
+        "template_input.csv",
+        "text/csv"
+    )
+
+    file = st.file_uploader("Upload CSV", type=["csv"])
 
     if file:
         df = pd.read_csv(file)
-        st.write(df.head())
+        st.write("Preview", df.head())
 
         if st.button("Run Prediction"):
 
             preds = model.predict(df)
             df["Prediction"] = preds
 
+            st.success("Prediction done")
             st.dataframe(df)
+
+            # DISTRIBUTION GRAPH
+            st.subheader("Prediction Distribution")
 
             fig, ax = plt.subplots()
             ax.hist(preds, bins=20)
-            ax.set_title("Prediction Distribution")
+            ax.set_title("Distribution of Predicted Values")
+            ax.set_xlabel("Prediction")
+            ax.set_ylabel("Frequency")
             st.pyplot(fig)
 
             st.download_button(
-                "Download Result",
+                "Download Result CSV",
                 df.to_csv(index=False),
                 "prediction.csv",
                 "text/csv"
             )
 
-# ================= FEATURE IMPORTANCE =================
+# =========================
+# FEATURE IMPORTANCE
+# =========================
 st.header("Feature Importance")
 
 try:
-    if hasattr(final_model,"feature_importances_"):
-        imp = final_model.feature_importances_
+    # kalau model pipeline
+    if hasattr(model, "named_steps"):
+        # ambil model terakhir di pipeline
+        final_model = list(model.named_steps.values())[-1]
+    else:
+        final_model = model
 
+    if hasattr(final_model, "feature_importances_"):
+        importance = final_model.feature_importances_
+
+        # coba ambil nama fitur dari preprocessor
         try:
-            names = preprocessor.get_feature_names_out()
+            preprocessor = model.named_steps["preprocessor"]
+            feature_names = preprocessor.get_feature_names_out()
         except:
-            names = [f"f{i}" for i in range(len(imp))]
+            feature_names = [f"feature_{i}" for i in range(len(importance))]
 
-        fi = pd.DataFrame({"Feature":names,"Importance":imp})
+        fi = pd.DataFrame({
+            "Feature": feature_names,
+            "Importance": importance
+        }).sort_values("Importance", ascending=False)
 
         fig, ax = plt.subplots(figsize=(6,4))
-        fi.sort_values("Importance").plot.barh(x="Feature",y="Importance",ax=ax)
+        ax.barh(fi["Feature"], fi["Importance"])
+        ax.invert_yaxis()
         st.pyplot(fig)
 
-        # grouped importance
-        fi["Group"] = fi["Feature"].str.split("__").str[0]
-        grp = fi.groupby("Group")["Importance"].sum().sort_values(ascending=False)
-
-        st.subheader("Grouped Importance")
-        fig2, ax2 = plt.subplots()
-        grp.plot.bar(ax=ax2)
-        st.pyplot(fig2)
-
-        # insight
-        top = grp.index[0]
-        st.success(f"📌 Biggest driver of engagement is **{top}**")
-
     else:
-        st.info("Model has no feature importance")
+        st.info("Model does not support feature importance.")
 
 except Exception as e:
-    st.warning("Feature importance unavailable")
+    st.warning("Feature importance could not be extracted.")
+    st.text(e)
