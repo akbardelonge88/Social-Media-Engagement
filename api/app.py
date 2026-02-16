@@ -21,17 +21,16 @@ def login():
 
     st.markdown("""
         <style>
-        /* Hilangkan padding atas Streamlit */
+        /* Hilangkan jarak atas default Streamlit */
         .main > div {
-            padding-top: 0rem;
+            padding-top: 1.5rem;
         }
 
-        /* Full screen vertical center */
-        .login-wrapper {
+        .logo-container {
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            height: 100%;
         }
 
         .login-card {
@@ -39,25 +38,22 @@ def login():
             padding: 40px;
             border-radius: 15px;
             box-shadow: 0px 4px 25px rgba(0,0,0,0.08);
-            width: 100%;
         }
 
-        .logo-container {
+        /* Vertical alignment kolom */
+        div[data-testid="column"] {
             display: flex;
             align-items: center;
-            justify-content: center;
         }
         </style>
     """, unsafe_allow_html=True)
-
-    st.markdown("<div class='login-wrapper'>", unsafe_allow_html=True)
 
     col1, col2 = st.columns([1.2, 1])
 
     # LOGO
     with col1:
         st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
-        st.image("login.png", width=380)  # <-- ukuran fix biar stabil
+        st.image("login.png", width=350)
         st.markdown("</div>", unsafe_allow_html=True)
 
     # LOGIN FORM
@@ -77,8 +73,6 @@ def login():
                 st.error("Invalid credentials")
 
         st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================
 # LOGOUT BUTTON
@@ -290,6 +284,7 @@ if mode == "Manual Input":
         st.warning("Feature importance could not be extracted.")
 
         st.text(e)
+
 
 
 
