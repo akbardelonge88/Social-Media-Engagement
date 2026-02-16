@@ -3,8 +3,10 @@ import pandas as pd
 import numpy as np
 import joblib
 import matplotlib.pyplot as plt
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
 
-st.set_page_config(page_title="ML Prediction App", layout="wide")
+st.set_page_config(page_title="ML Regression App", layout="wide")
 
 # =========================
 # LOGIN
@@ -35,28 +37,63 @@ def load_model():
     return joblib.load("model.pkl")
 
 model = load_model()
-
-st.title("📊 Engagement Prediction App")
-
-# =========================
-# DIMENSION VALUES (DARI SCRIPT LO TADI)
-# =========================
-DIMENSIONS = {
-    "day_of_week": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
-    "platform": ["YouTube","Twitter","Reddit","Instagram","Facebook"],
-    "topic_category": ["Pricing","Returns","Product","Delivery","Marketing","Support"],
-    "emotion_type": ["Sad","Happy","Confused","Excited","Angry"],
-    "campaign_phase": ["Pre-Launch","Launch","Post-Launch"]
-}
+st.title("📊 Engagement Prediction App (Regression)")
 
 # =========================
-# FEATURE DETECTION
+# AUTO DETECT PIPELINE STRUCTURE
 # =========================
+def inspect_pipeline(model):
+
+    numeric_cols = []
+    categorical_cols = []
+    category_map = {}
+
+    if isinstance(model, Pipeline):
+
+        for step_name, step in model.steps:
+
+            if isinstance(step, ColumnTransformer):
+
+                for name, transformer, cols in step.transformers_:
+
+                    # numeric
+                    if "num" in name.lower():
+                        numeric_cols.extend(cols)
+
+                    # categorical encoder
+                    if hasattr(transformer, "categories_"):
+                        categorical_cols.extend(cols)
+
+                        for c, cats in zip(cols, transformer.categories_):
+                            category_map[c] = list(cats)
+
+                    # pipeline inside columntransformer
+                    if isinstance(transformer, Pipeline):
+                        last = transformer.steps[-1][1]
+
+                        if hasattr(last, "categories_"):
+                            categorical_cols.extend(cols)
+
+                            for c, cats in zip(cols, last.categories_):
+                                category_map[c] = list(cats)
+
+                        else:
+                            numeric_cols.extend(cols)
+
+    return numeric_cols, categorical_cols, category_map
+
+
+numeric_cols, categorical_cols, category_map = inspect_pipeline(model)
+
+# fallback kalau model bukan pipeline
 if hasattr(model, "feature_names_in_"):
-    features = list(model.feature_names_in_)
+    all_cols = list(model.feature_names_in_)
 else:
-    features = []
+    all_cols = numeric_cols + categorical_cols
 
+# =========================
+# SIDEBAR
+# =========================
 st.sidebar.header("Input Mode")
 mode = st.sidebar.radio("Choose input method", ["Manual Input", "Upload CSV"])
 
@@ -68,31 +105,22 @@ if mode == "Manual Input":
     st.header("Manual Input Form")
     input_data = {}
 
-    for col in features:
+    for col in all_cols:
 
-        # kalau feature termasuk dimensi kategorikal
-        if col in DIMENSIONS:
-            input_data[col] = st.selectbox(col, DIMENSIONS[col])
+        # categorical auto from encoder
+        if col in category_map:
+            input_data[col] = st.selectbox(col, category_map[col])
 
-        # selain itu numeric
+        # numeric auto
         else:
             input_data[col] = st.number_input(col, value=0.0)
 
     if st.button("Predict"):
+
         df = pd.DataFrame([input_data])
         pred = model.predict(df)[0]
 
-        st.success(f"Prediction: {pred}")
-
-        if hasattr(model, "predict_proba"):
-            prob = model.predict_proba(df)[0]
-
-            st.subheader("Probability")
-
-            fig, ax = plt.subplots()
-            ax.bar(range(len(prob)), prob)
-            ax.set_title("Prediction Probability")
-            st.pyplot(fig)
+        st.success(f"Predicted Value: {round(float(pred),4)}")
 
 # =========================
 # CSV UPLOAD
@@ -111,12 +139,20 @@ if mode == "Upload CSV":
             preds = model.predict(df)
             df["Prediction"] = preds
 
-            if hasattr(model, "predict_proba"):
-                probs = model.predict_proba(df)
-                df["Probability"] = probs[:,1]
-
             st.success("Prediction done")
             st.dataframe(df)
+
+            # =========================
+            # DISTRIBUTION GRAPH
+            # =========================
+            st.subheader("Prediction Distribution")
+
+            fig, ax = plt.subplots()
+            ax.hist(preds, bins=20)
+            ax.set_title("Distribution of Predicted Values")
+            ax.set_xlabel("Prediction")
+            ax.set_ylabel("Frequency")
+            st.pyplot(fig)
 
             st.download_button(
                 "Download Result",
@@ -130,17 +166,23 @@ if mode == "Upload CSV":
 # =========================
 st.header("Feature Importance")
 
-if hasattr(model, "feature_importances_"):
-    importance = model.feature_importances_
+try:
+    final_model = model[-1] if isinstance(model, Pipeline) else model
 
-    fi = pd.DataFrame({
-        "Feature": features,
-        "Importance": importance
-    }).sort_values("Importance", ascending=False)
+    if hasattr(final_model, "feature_importances_"):
 
-    fig, ax = plt.subplots(figsize=(6,4))
-    ax.barh(fi["Feature"], fi["Importance"])
-    ax.invert_yaxis()
-    st.pyplot(fig)
-else:
-    st.info("Model does not support feature importance.")
+        fi = pd.DataFrame({
+            "Feature": getattr(model, "feature_names_in_", range(len(final_model.feature_importances_))),
+            "Importance": final_model.feature_importances_
+        }).sort_values("Importance", ascending=False)
+
+        fig, ax = plt.subplots(figsize=(6,4))
+        ax.barh(fi["Feature"], fi["Importance"])
+        ax.invert_yaxis()
+        st.pyplot(fig)
+
+    else:
+        st.info("Model does not expose feature_importances_")
+
+except:
+    st.info("Feature importance unavailable")
