@@ -46,14 +46,12 @@ def login():
         }
 
         .hero-title {
-            text-align: center;
             color: white;
             font-size: 42px;
             font-weight: 700;
         }
 
         .hero-subtitle {
-            text-align: center;
             color: rgba(255,255,255,0.6);
             font-size: 16px;
         }
@@ -74,7 +72,7 @@ def login():
             border: 1px solid rgba(255,255,255,0.15);
         }
 
-        .stTextInput label {
+        .sTtextInput label {
             color: rgba(255,255,255,0.7);
         }
 
@@ -316,6 +314,7 @@ if mode == "Manual Input":
     except Exception as e:
         st.warning("Feature importance could not be extracted.")
         st.text(e)
+
 
 
 
