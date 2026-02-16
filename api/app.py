@@ -30,9 +30,9 @@ def login():
             background-attachment: fixed;
         }
 
-        # .main > div {
-        #     padding-top: 1rem;
-        # }
+        main > div {
+         padding-top: 1rem;
+        }
 
         div[data-testid="column"] {
             display: flex;
@@ -318,4 +318,5 @@ if mode == "Manual Input":
     except Exception as e:
         st.warning("Feature importance could not be extracted.")
         st.text(e)
+
 
