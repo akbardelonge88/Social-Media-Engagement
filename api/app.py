@@ -26,25 +26,33 @@ def login():
             padding: 40px;
             border-radius: 15px;
             box-shadow: 0px 4px 20px rgba(0,0,0,0.1);
-            margin-top: 40px;
         }
 
-        .login-img {
-            margin-top: 10px;
+        /* Center isi kolom */
+        .center-col {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Hilangkan jarak atas default */
+        .block-container {
+            padding-top: 2rem;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    col1, col2 = st.columns([1.2,1])
+    col1, col2 = st.columns([1.2, 1])
 
-    # LEFT IMAGE (naikin posisi)
+    # LEFT LOGO (center vertical)
     with col1:
-        st.markdown("<div class='login-img'>", unsafe_allow_html=True)
+        st.markdown("<div class='center-col'>", unsafe_allow_html=True)
         st.image("login.png", use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     # RIGHT LOGIN CARD
     with col2:
+        st.markdown("<div class='center-col'>", unsafe_allow_html=True)
         st.markdown("<div class='login-card'>", unsafe_allow_html=True)
 
         st.markdown("## 🔐 LOGIN")
@@ -59,6 +67,7 @@ def login():
             else:
                 st.error("Invalid credentials")
 
+        st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================
@@ -271,5 +280,6 @@ if mode == "Manual Input":
         st.warning("Feature importance could not be extracted.")
 
         st.text(e)
+
 
 
