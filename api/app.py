@@ -22,7 +22,7 @@ def login():
     st.markdown("""
         <style>
         .login-card {
-            background-color: white;
+            background-color: #f8f9fb;
             padding: 40px;
             border-radius: 15px;
             box-shadow: 0px 4px 20px rgba(0,0,0,0.1);
@@ -271,4 +271,5 @@ if mode == "Manual Input":
         st.warning("Feature importance could not be extracted.")
 
         st.text(e)
+
 
