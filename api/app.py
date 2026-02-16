@@ -1,241 +1,145 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib
+import pickle
 import matplotlib.pyplot as plt
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
 
-st.set_page_config(page_title="ML Regression App", layout="wide")
+# ================= USER LOGIN =================
+USERS = {
+    "akbar": {"password": "123", "role": "premium"},
+    "guest": {"password": "123", "role": "free"},
+}
 
-# =========================
-# SESSION LOGIN STATE
-# =========================
-if "login" not in st.session_state:
-    st.session_state["login"] = False
+if "user" not in st.session_state:
+    st.session_state.user = None
 
-# =========================
-# LOGIN FUNCTION
-# =========================
-def login():
+def login_page():
     st.title("🔐 Login")
-    user = st.text_input("Username")
-    pwd = st.text_input("Password", type="password")
+
+    u = st.text_input("Username")
+    p = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        if user == "admin" and pwd == "1234":
-            st.session_state["login"] = True
+        if u in USERS and USERS[u]["password"] == p:
+            st.session_state.user = {"name": u, "role": USERS[u]["role"]}
             st.rerun()
         else:
-            st.error("Invalid credentials")
+            st.error("Login gagal")
 
-# =========================
-# LOGOUT BUTTON
-# =========================
-def logout_button():
+def logout_btn():
     if st.sidebar.button("🚪 Logout"):
-        st.session_state["login"] = False
+        st.session_state.user = None
         st.rerun()
 
-# =========================
-# STOP IF NOT LOGIN
-# =========================
-if not st.session_state["login"]:
-    login()
+if st.session_state.user is None:
+    login_page()
     st.stop()
 
-logout_button()
+logout_btn()
 
-# =========================
-# LOAD MODEL
-# =========================
+st.sidebar.success(f"Login: {st.session_state.user['name']}")
+st.sidebar.info(f"Role: {st.session_state.user['role']}")
+
+# ================= LOAD MODEL =================
 @st.cache_resource
 def load_model():
-    return joblib.load("model.pkl")
-
-model = load_model()
-st.title("📊 Engagement Prediction App (Regression)")
-
-# =========================
-# INSPECT PIPELINE
-# =========================
-def inspect_pipeline(model):
-
-    numeric_cols = []
-    categorical_cols = []
-    category_map = {}
-
-    if isinstance(model, Pipeline):
-
-        for step_name, step in model.steps:
-
-            if isinstance(step, ColumnTransformer):
-
-                for name, transformer, cols in step.transformers_:
-
-                    # categorical encoder
-                    if isinstance(transformer, Pipeline):
-                        last = transformer.steps[-1][1]
-                    else:
-                        last = transformer
-
-                    if hasattr(last, "categories_"):
-                        categorical_cols.extend(cols)
-                        for c, cats in zip(cols, last.categories_):
-                            category_map[c] = list(cats)
-                    else:
-                        numeric_cols.extend(cols)
-
-    return numeric_cols, categorical_cols, category_map
-
-numeric_cols, categorical_cols, category_map = inspect_pipeline(model)
-
-# fallback
-if hasattr(model, "feature_names_in_"):
-    all_cols = list(model.feature_names_in_)
-else:
-    all_cols = numeric_cols + categorical_cols
-
-# =========================
-# SIDEBAR MODE
-# =========================
-st.sidebar.header("Input Mode")
-mode = st.sidebar.radio("Choose input method", ["Manual Input", "Upload CSV"])
-
-# =========================
-# MANUAL INPUT (2 COLUMNS)
-# =========================
-if mode == "Manual Input":
-
-    st.header("Manual Input Form")
-
-    # urutan sesuai request lo
-    ordered_cols = [
-        "day_of_week","hour",
-        "platform","text_length",
-        "topic_category","hashtag_count",
-        "emotion_type","mention_count",
-        "campaign_phase","sentiment_score",
-        "impressions","toxicity_score",
-        "month"
-    ]
-
-    col_left, col_right = st.columns(2)
-    input_data = {}
-
-    for i, col in enumerate(ordered_cols):
-
-        target_col = col_left if i % 2 == 0 else col_right
-
-        with target_col:
-
-            if col in category_map:
-                input_data[col] = st.selectbox(col, category_map[col])
-            else:
-                input_data[col] = st.number_input(col, value=0.0)
-
-    if st.button("Predict"):
-        df = pd.DataFrame([input_data])
-        pred = model.predict(df)[0]
-        st.success(f"Predicted Value: {round(float(pred),4)}")
-
-# =========================
-# CSV UPLOAD + TEMPLATE
-# =========================
-if mode == "Upload CSV":
-
-    st.header("Upload CSV for Batch Prediction")
-
-    # TEMPLATE CSV
-    template_df = pd.DataFrame(columns=all_cols)
-    csv_template = template_df.to_csv(index=False)
-
-    st.download_button(
-        "⬇ Download CSV Template",
-        csv_template,
-        "template_input.csv",
-        "text/csv"
-    )
-
-    file = st.file_uploader("Upload CSV", type=["csv"])
-
-    if file:
-        df = pd.read_csv(file)
-        st.write("Preview", df.head())
-
-        if st.button("Run Prediction"):
-
-            preds = model.predict(df)
-            df["Prediction"] = preds
-
-            st.success("Prediction done")
-            st.dataframe(df)
-
-            # DISTRIBUTION GRAPH
-            st.subheader("Prediction Distribution")
-
-            fig, ax = plt.subplots()
-            ax.hist(preds, bins=20)
-            ax.set_title("Distribution of Predicted Values")
-            ax.set_xlabel("Prediction")
-            ax.set_ylabel("Frequency")
-            st.pyplot(fig)
-
-            st.download_button(
-                "Download Result CSV",
-                df.to_csv(index=False),
-                "prediction.csv",
-                "text/csv"
-            )
-
-# =========================
-# FEATURE IMPORTANCE (IMPROVED)
-# =========================
-st.header("Feature Importance")
+    with open("model.pkl","rb") as f:
+        return pickle.load(f)
 
 try:
-    # ambil model terakhir
-    if hasattr(model, "named_steps"):
-        final_model = list(model.named_steps.values())[-1]
-    else:
-        final_model = model
+    model = load_model()
+except:
+    st.warning("Model belum ditemukan (model.pkl)")
+    model = None
 
-    if hasattr(final_model, "feature_importances_"):
+# ================= TEMPLATE CSV =================
+template = pd.DataFrame({
+    "feature_1":[1],
+    "feature_2":[2],
+    "category":["A"]
+})
 
-        importance = final_model.feature_importances_
+csv_template = template.to_csv(index=False).encode("utf-8")
 
-        # ambil nama fitur dari preprocessor
-        try:
-            preprocessor = model.named_steps["preprocessor"]
-            feature_names = preprocessor.get_feature_names_out()
-        except:
-            feature_names = [f"feature_{i}" for i in range(len(importance))]
+st.download_button(
+    "📥 Download Template CSV",
+    csv_template,
+    "template.csv",
+    "text/csv"
+)
 
-        fi = pd.DataFrame({
-            "Feature": feature_names,
-            "Importance": importance
-        }).sort_values("Importance", ascending=False).head(20)
+# ================= UPLOAD DATA =================
+file = st.file_uploader("Upload CSV")
 
-        # plotting lebih rapi
-        fig, ax = plt.subplots(figsize=(8,6))
+if file:
+    df = pd.read_csv(file)
+    st.write("Preview data", df.head())
 
-        bars = ax.barh(
-            fi["Feature"],
-            fi["Importance"]
-        )
+    # ===== AUTO DETECT TYPE =====
+    numeric_cols = df.select_dtypes(include=np.number).columns.tolist()
+    cat_cols = df.select_dtypes(exclude=np.number).columns.tolist()
 
-        ax.invert_yaxis()
-        ax.set_title("Top Feature Importance", fontsize=14)
-        ax.set_xlabel("Importance Score")
+    st.write("Numeric:", numeric_cols)
+    st.write("Categorical:", cat_cols)
 
-        # kasih spasi biar gak dempet
-        plt.tight_layout()
+    # ===== ENCODING SIMPLE =====
+    df_encoded = df.copy()
+    encoders = {}
 
+    for c in cat_cols:
+        df_encoded[c] = df_encoded[c].astype("category")
+        encoders[c] = dict(enumerate(df_encoded[c].cat.categories))
+        df_encoded[c] = df_encoded[c].cat.codes
+
+    # ===== PREDICT =====
+    if model:
+        preds = model.predict(df_encoded)
+        df["prediction"] = preds
+        st.success("Prediksi selesai")
+        st.write(df.head())
+
+        # ===== DISTRIBUTION PLOT =====
+        st.subheader("Distribusi Prediksi")
+        fig, ax = plt.subplots()
+        ax.hist(preds, bins=20)
         st.pyplot(fig)
 
-    else:
-        st.info("Model does not support feature importance.")
+        # ===== FEATURE IMPORTANCE =====
+        st.subheader("Feature Importance")
 
-except Exception as e:
-    st.warning("Feature importance could not be extracted.")
-    st.text(e)
+        if hasattr(model, "feature_importances_"):
+            imp = pd.Series(
+                model.feature_importances_,
+                index=df_encoded.columns
+            ).sort_values(ascending=False)
+
+            # group by category name before underscore
+            grouped = imp.groupby(lambda x: x.split("_")[0]).sum()
+
+            st.bar_chart(grouped)
+
+            top_feature = grouped.idxmax()
+            st.success(f"🔥 Driver utama prediksi: {top_feature}")
+
+            st.info(f"📊 Insight: Variabel '{top_feature}' paling berpengaruh terhadap hasil model.")
+
+        else:
+            st.warning("Model tidak punya feature importance")
+
+        # ===== SHAP PREMIUM ONLY =====
+        if st.session_state.user["role"] != "premium":
+            st.warning("🔒 SHAP hanya untuk premium")
+        else:
+            st.subheader("SHAP Explainability")
+
+            try:
+                import shap
+                explainer = shap.Explainer(model, df_encoded)
+                shap_values = explainer(df_encoded[:50])
+
+                fig2 = plt.figure()
+                shap.plots.beeswarm(shap_values, show=False)
+                st.pyplot(fig2)
+
+            except Exception as e:
+                st.error("SHAP gagal dijalankan. Install shap dulu.")
