@@ -146,7 +146,7 @@ def login():
 # LOGOUT BUTTON
 # =========================
 def logout_button():
-    if st.sidebar.button("🚪 Logout"):
+    if st.sidebar.button("🚫 Logout"):
         st.session_state["login"] = False
         st.rerun()
 
@@ -167,7 +167,7 @@ def load_model():
     return joblib.load("model.pkl")
 
 model = load_model()
-st.title("📊 Engagement Prediction App (Regression)")
+st.title("🧮 Engagement Prediction App (Regression)")
 
 # =========================
 # INSPECT PIPELINE
@@ -346,6 +346,7 @@ st.markdown("""
     © 2026 Hexamind. All Rights Reserved
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
