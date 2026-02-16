@@ -167,7 +167,7 @@ def load_model():
     return joblib.load("model.pkl")
 
 model = load_model()
-st.title("🚀 Engagement Prediction App (Regression)")
+st.title("🧠⏱️ Engagement Prediction App (Regression)")
 
 # =========================
 # INSPECT PIPELINE
@@ -265,7 +265,7 @@ if mode == "Upload CSV":
         df = pd.read_csv(file)
         st.write("Preview", df.head())
 
-        if st.button("Run Prediction"):
+        if st.button("🚀 Run Prediction"):
 
             preds = model.predict(df)
             df["Prediction"] = preds
@@ -346,6 +346,7 @@ st.markdown("""
     © 2026 Hexamind. All Rights Reserved
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
