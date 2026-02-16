@@ -31,8 +31,14 @@ def login():
         }
 
         main > div {
-         padding-top: 1rem;
+         padding-top: 0rem;
+         padding-bottom: 0rem;
         }
+
+        .block-container {
+            padding-top: 0.5rem;
+            padding-bottom: 0rem;
+        }    
 
         div[data-testid="column"] {
             display: flex;
@@ -340,6 +346,7 @@ st.markdown("""
     © 2026 Hexamind. All Rights Reserved
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
