@@ -106,25 +106,33 @@ def login():
 
     col1, col2 = st.columns([1.2, 1])
 
-    with col1:
-        st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
-        st.image("login.png", width=380)
-        st.markdown("</div>", unsafe_allow_html=True)
+with col1:
+    st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
+    st.image("login.png", width=380)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    with col2:
-        st.markdown("<div class='login-card'>", unsafe_allow_html=True)
+with col2:
 
-        user = st.text_input("User Name", key="login_user")
-        pwd = st.text_input("Password", type="password", key="login_pwd")
+    st.markdown("""
+        <div class='hero-title'>Welcome Back!</div>
+        <div class='hero-subtitle'>
+            Sign in to continue to Hexamind
+        </div>
+    """, unsafe_allow_html=True)
 
-        if st.button("Login", use_container_width=True, key="login_btn"):
-            if user == "admin" and pwd == "1234":
-                st.session_state["login"] = True
-                st.rerun()
-            else:
-                st.error("Invalid credentials")
+    st.markdown("<div class='login-card'>", unsafe_allow_html=True)
 
-        st.markdown("</div>", unsafe_allow_html=True)
+    user = st.text_input("User Name", key="login_user")
+    pwd = st.text_input("Password", type="password", key="login_pwd")
+
+    if st.button("Login", use_container_width=True, key="login_btn"):
+        if user == "admin" and pwd == "1234":
+            st.session_state["login"] = True
+            st.rerun()
+        else:
+            st.error("Invalid credentials")
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================
 # LOGOUT BUTTON
@@ -318,6 +326,7 @@ if mode == "Manual Input":
     except Exception as e:
         st.warning("Feature importance could not be extracted.")
         st.text(e)
+
 
 
 
