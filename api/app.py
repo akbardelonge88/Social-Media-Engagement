@@ -19,7 +19,6 @@ if "login" not in st.session_state:
 # =========================
 def login():
 
-    # background style
     st.markdown("""
         <style>
         .login-card {
@@ -27,21 +26,22 @@ def login():
             padding: 40px;
             border-radius: 15px;
             box-shadow: 0px 4px 20px rgba(0,0,0,0.1);
+            margin-top: 80px;
         }
-        .center-box {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 90vh;
+
+        .login-img {
+            margin-top: 40px;
         }
         </style>
     """, unsafe_allow_html=True)
 
     col1, col2 = st.columns([1.2,1])
 
-    # LEFT IMAGE
+    # LEFT IMAGE (naikin posisi)
     with col1:
+        st.markdown("<div class='login-img'>", unsafe_allow_html=True)
         st.image("login.png", use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     # RIGHT LOGIN CARD
     with col2:
@@ -49,7 +49,7 @@ def login():
 
         st.markdown("## 🔐 LOGIN")
 
-        user = st.text_input("Username")
+        user = st.text_input("User Name")
         pwd = st.text_input("Password", type="password")
 
         if st.button("Login", use_container_width=True):
@@ -223,6 +223,7 @@ if mode == "Upload CSV":
 # =========================
 # FEATURE IMPORTANCE (IMPROVED)
 # =========================
+if mode == "Manual Input":
 st.header("Feature Importance")
 
 try:
@@ -270,6 +271,4 @@ try:
 
 except Exception as e:
     st.warning("Feature importance could not be extracted.")
-
     st.text(e)
-
