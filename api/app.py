@@ -21,38 +21,47 @@ def login():
 
     st.markdown("""
         <style>
+        /* Hilangkan padding atas Streamlit */
+        .main > div {
+            padding-top: 0rem;
+        }
+
+        /* Full screen vertical center */
+        .login-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
         .login-card {
             background-color: #f8f9fb;
             padding: 40px;
             border-radius: 15px;
-            box-shadow: 0px 4px 20px rgba(0,0,0,0.1);
+            box-shadow: 0px 4px 25px rgba(0,0,0,0.08);
+            width: 100%;
         }
 
-        /* Center isi kolom */
-        .center-col {
+        .logo-container {
             display: flex;
             align-items: center;
             justify-content: center;
         }
-
-        /* Hilangkan jarak atas default */
-        .block-container {
-            padding-top: 2rem;
-        }
         </style>
     """, unsafe_allow_html=True)
 
+    st.markdown("<div class='login-wrapper'>", unsafe_allow_html=True)
+
     col1, col2 = st.columns([1.2, 1])
 
-    # LEFT LOGO (center vertical)
+    # LOGO
     with col1:
-        st.markdown("<div class='center-col'>", unsafe_allow_html=True)
-        st.image("login.png", use_container_width=True)
+        st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
+        st.image("login.png", width=380)  # <-- ukuran fix biar stabil
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # RIGHT LOGIN CARD
+    # LOGIN FORM
     with col2:
-        st.markdown("<div class='center-col'>", unsafe_allow_html=True)
         st.markdown("<div class='login-card'>", unsafe_allow_html=True)
 
         st.markdown("## 🔐 LOGIN")
@@ -68,7 +77,8 @@ def login():
                 st.error("Invalid credentials")
 
         st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================
 # LOGOUT BUTTON
@@ -280,6 +290,7 @@ if mode == "Manual Input":
         st.warning("Feature importance could not be extracted.")
 
         st.text(e)
+
 
 
 
