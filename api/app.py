@@ -30,9 +30,9 @@ def login():
             background-attachment: fixed;
         }
 
-        .main > div {
-            padding-top: 0;
-        }
+        # .main > div {
+        #     padding-top: 1rem;
+        # }
 
         div[data-testid="column"] {
             display: flex;
@@ -46,16 +46,18 @@ def login():
         }
 
         .hero-title {
-            align-text: center;
+            text-align: center;
             color: white;
             font-size: 42px;
             font-weight: 700;
+            margin-bottom: 5px;
         }
 
         .hero-subtitle {
-            align-text: center;
+            text-align: center;
             color: rgba(255,255,255,0.6);
             font-size: 16px;
+            margin-bottom: 35px;
         }
 
         .login-card {
@@ -74,7 +76,7 @@ def login():
             border: 1px solid rgba(255,255,255,0.15);
         }
 
-        .sTtextInput label {
+        .stTextInput label {
             color: rgba(255,255,255,0.7);
         }
 
@@ -316,26 +318,4 @@ if mode == "Manual Input":
     except Exception as e:
         st.warning("Feature importance could not be extracted.")
         st.text(e)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
