@@ -178,13 +178,26 @@ if mode == "Upload CSV":
 st.header("Feature Importance")
 
 try:
-    final_model = model[-1] if isinstance(model, Pipeline) else model
+    # kalau model pipeline
+    if hasattr(model, "named_steps"):
+        # ambil model terakhir di pipeline
+        final_model = list(model.named_steps.values())[-1]
+    else:
+        final_model = model
 
     if hasattr(final_model, "feature_importances_"):
+        importance = final_model.feature_importances_
+
+        # coba ambil nama fitur dari preprocessor
+        try:
+            preprocessor = model.named_steps["preprocessor"]
+            feature_names = preprocessor.get_feature_names_out()
+        except:
+            feature_names = [f"feature_{i}" for i in range(len(importance))]
 
         fi = pd.DataFrame({
-            "Feature": getattr(model, "feature_names_in_", range(len(final_model.feature_importances_))),
-            "Importance": final_model.feature_importances_
+            "Feature": feature_names,
+            "Importance": importance
         }).sort_values("Importance", ascending=False)
 
         fig, ax = plt.subplots(figsize=(6,4))
@@ -193,7 +206,8 @@ try:
         st.pyplot(fig)
 
     else:
-        st.info("Model does not expose feature_importances_")
+        st.info("Model does not support feature importance.")
 
-except:
-    st.info("Feature importance unavailable")
+except Exception as e:
+    st.warning("Feature importance could not be extracted.")
+    st.text(e)
