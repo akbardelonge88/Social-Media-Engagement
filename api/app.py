@@ -61,11 +61,11 @@ def login():
         }
 
         .login-card {
-            background: rgba(255, 255, 255, 0.08);
+            background: transaparent;
             backdrop-filter: blur(14px);
-            padding: 45px;
-            border-radius: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 0px;
+            border-radius: 0px;
+            border: 0px solid rgba(255, 255, 255, 0.12);
             box-shadow: 0 8px 40px rgba(0,0,0,0.35);
         }
 
@@ -318,6 +318,7 @@ if mode == "Manual Input":
     except Exception as e:
         st.warning("Feature importance could not be extracted.")
         st.text(e)
+
 
 
 
