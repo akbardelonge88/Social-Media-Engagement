@@ -50,14 +50,12 @@ def login():
             color: white;
             font-size: 42px;
             font-weight: 700;
-            margin-bottom: 5px;
         }
 
         .hero-subtitle {
             text-align: center;
             color: rgba(255,255,255,0.6);
             font-size: 16px;
-            margin-bottom: 35px;
         }
 
         .login-card {
@@ -318,6 +316,7 @@ if mode == "Manual Input":
     except Exception as e:
         st.warning("Feature importance could not be extracted.")
         st.text(e)
+
 
 
 
