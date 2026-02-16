@@ -221,54 +221,52 @@ if mode == "Upload CSV":
             )
 
 # =========================
-# FEATURE IMPORTANCE (IMPROVED)
+# FEATURE IMPORTANCE (ONLY MANUAL INPUT PAGE)
 # =========================
 if mode == "Manual Input":
-st.header("Feature Importance")
 
-try:
-    # ambil model terakhir
-    if hasattr(model, "named_steps"):
-        final_model = list(model.named_steps.values())[-1]
-    else:
-        final_model = model
+    st.header("Feature Importance")
 
-    if hasattr(final_model, "feature_importances_"):
+    try:
+        # ambil model terakhir
+        if hasattr(model, "named_steps"):
+            final_model = list(model.named_steps.values())[-1]
+        else:
+            final_model = model
 
-        importance = final_model.feature_importances_
+        if hasattr(final_model, "feature_importances_"):
 
-        # ambil nama fitur dari preprocessor
-        try:
-            preprocessor = model.named_steps["preprocessor"]
-            feature_names = preprocessor.get_feature_names_out()
-        except:
-            feature_names = [f"feature_{i}" for i in range(len(importance))]
+            importance = final_model.feature_importances_
 
-        fi = pd.DataFrame({
-            "Feature": feature_names,
-            "Importance": importance
-        }).sort_values("Importance", ascending=False).head(20)
+            # ambil nama fitur dari pipeline kalau ada
+            feature_names = None
 
-        # plotting lebih rapi
-        fig, ax = plt.subplots(figsize=(8,6))
+            if hasattr(model, "named_steps"):
+                for step in model.named_steps.values():
+                    if hasattr(step, "get_feature_names_out"):
+                        feature_names = step.get_feature_names_out()
+                        break
 
-        bars = ax.barh(
-            fi["Feature"],
-            fi["Importance"]
-        )
+            if feature_names is None:
+                feature_names = [f"feature_{i}" for i in range(len(importance))]
 
-        ax.invert_yaxis()
-        ax.set_title("Top Feature Importance", fontsize=14)
-        ax.set_xlabel("Importance Score")
+            fi = pd.DataFrame({
+                "Feature": feature_names,
+                "Importance": importance
+            }).sort_values("Importance", ascending=False).head(20)
 
-        # kasih spasi biar gak dempet
-        plt.tight_layout()
+            fig, ax = plt.subplots(figsize=(8,6))
+            ax.barh(fi["Feature"], fi["Importance"])
+            ax.invert_yaxis()
+            ax.set_title("Top Feature Importance")
+            ax.set_xlabel("Importance Score")
+            plt.tight_layout()
 
-        st.pyplot(fig)
+            st.pyplot(fig)
 
-    else:
-        st.info("Model does not support feature importance.")
+        else:
+            st.info("Model does not support feature importance.")
 
-except Exception as e:
-    st.warning("Feature importance could not be extracted.")
-    st.text(e)
+    except Exception as e:
+        st.warning("Feature importance could not be extracted.")
+        st.text(e)
