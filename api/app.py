@@ -30,7 +30,7 @@ def login():
         }
 
         .login-img {
-            margin-top: 40px;
+            margin-top: 10px;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -271,3 +271,4 @@ if mode == "Manual Input":
         st.warning("Feature importance could not be extracted.")
 
         st.text(e)
+
