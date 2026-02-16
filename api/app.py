@@ -18,16 +18,48 @@ if "login" not in st.session_state:
 # LOGIN FUNCTION
 # =========================
 def login():
-    st.title("🔐 Login")
-    user = st.text_input("Username")
-    pwd = st.text_input("Password", type="password")
 
-    if st.button("Login"):
-        if user == "admin" and pwd == "1234":
-            st.session_state["login"] = True
-            st.rerun()
-        else:
-            st.error("Invalid credentials")
+    # background style
+    st.markdown("""
+        <style>
+        .login-card {
+            background-color: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 20px rgba(0,0,0,0.1);
+        }
+        .center-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 90vh;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    col1, col2 = st.columns([1.2,1])
+
+    # LEFT IMAGE
+    with col1:
+        st.image("login.png", use_container_width=True)
+
+    # RIGHT LOGIN CARD
+    with col2:
+        st.markdown("<div class='login-card'>", unsafe_allow_html=True)
+
+        st.markdown("## 🔐 LOGIN")
+
+        user = st.text_input("Email")
+        pwd = st.text_input("Password", type="password")
+
+        if st.button("Login", use_container_width=True):
+            if user == "admin" and pwd == "1234":
+                st.session_state["login"] = True
+                st.rerun()
+            else:
+                st.error("Invalid credentials")
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================
 # LOGOUT BUTTON
