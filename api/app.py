@@ -31,7 +31,7 @@ def login():
         }
 
         .main > div {
-            padding-top: 1rem;
+            padding-top: 0;
         }
 
         div[data-testid="column"] {
@@ -46,12 +46,14 @@ def login():
         }
 
         .hero-title {
+            align-text: center;
             color: white;
             font-size: 42px;
             font-weight: 700;
         }
 
         .hero-subtitle {
+            align-text: center;
             color: rgba(255,255,255,0.6);
             font-size: 16px;
         }
@@ -314,6 +316,7 @@ if mode == "Manual Input":
     except Exception as e:
         st.warning("Feature importance could not be extracted.")
         st.text(e)
+
 
 
 
