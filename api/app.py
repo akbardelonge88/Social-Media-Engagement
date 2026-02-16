@@ -21,46 +21,96 @@ def login():
 
     st.markdown("""
         <style>
-        /* Hilangkan jarak atas default Streamlit */
+
+        /* ===== BACKGROUND GRADIENT ===== */
+        .stApp {
+            background: linear-gradient(135deg, #0f172a, #1e293b, #020617);
+            background-attachment: fixed;
+        }
+
+        /* Hilangkan padding atas default */
         .main > div {
-            padding-top: 1.5rem;
+            padding-top: 2rem;
         }
 
-        .logo-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-        }
-
-        .login-card {
-            background-color: #f8f9fb;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0px 4px 25px rgba(0,0,0,0.08);
-        }
-
-        /* Vertical alignment kolom */
+        /* ===== COLUMN ALIGNMENT ===== */
         div[data-testid="column"] {
             display: flex;
             align-items: center;
         }
+
+        /* ===== LOGO ===== */
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        /* ===== GLASS LOGIN CARD ===== */
+        .login-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 45px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+        }
+
+        /* ===== TITLE ===== */
+        .login-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        /* ===== INPUT ===== */
+        .stTextInput input {
+            background-color: rgba(255,255,255,0.08);
+            color: white;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .stTextInput label {
+            color: rgba(255,255,255,0.7);
+        }
+
+        /* ===== NEON BUTTON ===== */
+        .stButton button {
+            background: linear-gradient(90deg, #22d3ee, #6366f1);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            box-shadow: 0 0 15px rgba(99,102,241,0.6);
+            transition: 0.3s;
+        }
+
+        .stButton button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(34,211,238,0.9);
+        }
+
         </style>
     """, unsafe_allow_html=True)
 
     col1, col2 = st.columns([1.2, 1])
 
-    # LOGO
+    # ===== LEFT LOGO =====
     with col1:
         st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
-        st.image("login.png", width=350)
+        st.image("login.png", width=380)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # LOGIN FORM
+    # ===== RIGHT LOGIN =====
     with col2:
         st.markdown("<div class='login-card'>", unsafe_allow_html=True)
 
-        st.markdown("## 🔐 LOGIN")
+        st.markdown("<div class='login-title'>🔐 LOGIN</div>", unsafe_allow_html=True)
 
         user = st.text_input("User Name")
         pwd = st.text_input("Password", type="password")
@@ -284,6 +334,7 @@ if mode == "Manual Input":
         st.warning("Feature importance could not be extracted.")
 
         st.text(e)
+
 
 
 
