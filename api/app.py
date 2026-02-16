@@ -103,22 +103,38 @@ st.sidebar.header("Input Mode")
 mode = st.sidebar.radio("Choose input method", ["Manual Input", "Upload CSV"])
 
 # =========================
-# MANUAL INPUT
+# MANUAL INPUT (2 COLUMNS)
 # =========================
 if mode == "Manual Input":
 
     st.header("Manual Input Form")
+
+    # urutan sesuai request lo
+    ordered_cols = [
+        "day_of_week","hour",
+        "platform","text_length",
+        "topic_category","hashtag_count",
+        "emotion_type","mention_count",
+        "campaign_phase","sentiment_score",
+        "impressions","toxicity_score",
+        "month"
+    ]
+
+    col_left, col_right = st.columns(2)
     input_data = {}
 
-    for col in all_cols:
+    for i, col in enumerate(ordered_cols):
 
-        if col in category_map:
-            input_data[col] = st.selectbox(col, category_map[col])
-        else:
-            input_data[col] = st.number_input(col, value=0.0)
+        target_col = col_left if i % 2 == 0 else col_right
+
+        with target_col:
+
+            if col in category_map:
+                input_data[col] = st.selectbox(col, category_map[col])
+            else:
+                input_data[col] = st.number_input(col, value=0.0)
 
     if st.button("Predict"):
-
         df = pd.DataFrame([input_data])
         pred = model.predict(df)[0]
         st.success(f"Predicted Value: {round(float(pred),4)}")
@@ -173,22 +189,22 @@ if mode == "Upload CSV":
             )
 
 # =========================
-# FEATURE IMPORTANCE
+# FEATURE IMPORTANCE (IMPROVED)
 # =========================
 st.header("Feature Importance")
 
 try:
-    # kalau model pipeline
+    # ambil model terakhir
     if hasattr(model, "named_steps"):
-        # ambil model terakhir di pipeline
         final_model = list(model.named_steps.values())[-1]
     else:
         final_model = model
 
     if hasattr(final_model, "feature_importances_"):
+
         importance = final_model.feature_importances_
 
-        # coba ambil nama fitur dari preprocessor
+        # ambil nama fitur dari preprocessor
         try:
             preprocessor = model.named_steps["preprocessor"]
             feature_names = preprocessor.get_feature_names_out()
@@ -198,11 +214,23 @@ try:
         fi = pd.DataFrame({
             "Feature": feature_names,
             "Importance": importance
-        }).sort_values("Importance", ascending=False)
+        }).sort_values("Importance", ascending=False).head(20)
 
-        fig, ax = plt.subplots(figsize=(6,4))
-        ax.barh(fi["Feature"], fi["Importance"])
+        # plotting lebih rapi
+        fig, ax = plt.subplots(figsize=(8,6))
+
+        bars = ax.barh(
+            fi["Feature"],
+            fi["Importance"]
+        )
+
         ax.invert_yaxis()
+        ax.set_title("Top Feature Importance", fontsize=14)
+        ax.set_xlabel("Importance Score")
+
+        # kasih spasi biar gak dempet
+        plt.tight_layout()
+
         st.pyplot(fig)
 
     else:
