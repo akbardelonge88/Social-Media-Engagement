@@ -29,7 +29,7 @@ st.markdown("""
 
 /* ===== Hide Header ===== */
 header {visibility: hidden;}
-[data-testid="stHeader"] {display: none;}
+[data-testid="collapsedControl"] {display: none;}
 
 /* ===== Sidebar ===== */
 section[data-testid="stSidebar"] {
@@ -319,6 +319,7 @@ if mode == "Manual Input":
 # FOOTER
 # =========================
 st.markdown("<div class='footer'>© 2026 HEXAMIND • Machine Learning Analytics System</div>", unsafe_allow_html=True)
+
 
 
 
