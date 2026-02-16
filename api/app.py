@@ -19,69 +19,7 @@ if "login" not in st.session_state:
 # =========================
 def login():
 
-    st.markdown("""
-<style>
-
-/* bikin halaman full width */
-.block-container {
-    max-width: 1200px;
-    padding-top: 2rem;
-}
-
-/* center vertical */
-.login-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 80vh;
-}
-
-/* card login */
-.login-card {
-    background: white;
-    padding: 45px;
-    border-radius: 18px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-}
-
-/* image align tengah */
-.login-img {
-    margin-top: 20px;
-}
-
-/* hilangkan padding sidebar kosong */
-.css-1d391kg {padding-top:0rem;}
-
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("<div class='login-wrapper'>", unsafe_allow_html=True)
-
-col1, col2 = st.columns([1.2,1])
-
-with col1:
-    st.markdown("<div class='login-img'>", unsafe_allow_html=True)
-    st.image("login.png", use_container_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-with col2:
-    st.markdown("<div class='login-card'>", unsafe_allow_html=True)
-
-    st.markdown("## 🔐 LOGIN")
-
-    user = st.text_input("User Name")
-    pwd = st.text_input("Password", type="password")
-
-    if st.button("Login", use_container_width=True):
-        if user == "admin" and pwd == "1234":
-            st.session_state["login"] = True
-            st.rerun()
-        else:
-            st.error("Invalid credentials")
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-st.markdown("</div>", unsafe_allow_html=True)
+# background style st.markdown(""" <style> .login-card { background-color: white; padding: 40px; border-radius: 15px; box-shadow: 0px 4px 20px rgba(0,0,0,0.1); } .center-box { display: flex; align-items: center; justify-content: center; height: 90vh; } </style> """, unsafe_allow_html=True) col1, col2 = st.columns([1.2,1]) # LEFT IMAGE with col1: st.image("login.png", use_container_width=True) # RIGHT LOGIN CARD with col2: st.markdown("<div class='login-card'>", unsafe_allow_html=True) st.markdown("## 🔐 LOGIN") user = st.text_input("User Name") pwd = st.text_input("Password", type="password") if st.button("Login", use_container_width=True): if user == "admin" and pwd == "1234": st.session_state["login"] = True st.rerun() else: st.error("Invalid credentials") st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================
 # LOGOUT BUTTON
