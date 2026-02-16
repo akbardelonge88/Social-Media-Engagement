@@ -26,7 +26,7 @@ def login():
             padding: 40px;
             border-radius: 15px;
             box-shadow: 0px 4px 20px rgba(0,0,0,0.1);
-            margin-top: 80px;
+            margin-top: 40px;
         }
 
         .login-img {
@@ -269,4 +269,5 @@ if mode == "Manual Input":
 
     except Exception as e:
         st.warning("Feature importance could not be extracted.")
+
         st.text(e)
