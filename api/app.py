@@ -22,15 +22,19 @@ def login():
     st.markdown("""
         <style>
 
-        /* ===== BACKGROUND GRADIENT ===== */
+        /* ===== HIDE STREAMLIT HEADER ===== */
+        header {visibility: hidden;}
+        [data-testid="stHeader"] {display: none;}
+
+        /* ===== BACKGROUND ===== */
         .stApp {
             background: linear-gradient(135deg, #0f172a, #1e293b, #020617);
             background-attachment: fixed;
         }
 
-        /* Hilangkan padding atas default */
+        /* ===== GLOBAL SPACING ===== */
         .main > div {
-            padding-top: 2rem;
+            padding-top: 1rem;
         }
 
         /* ===== COLUMN ALIGNMENT ===== */
@@ -46,23 +50,32 @@ def login():
             width: 100%;
         }
 
-        /* ===== GLASS LOGIN CARD ===== */
+        /* ===== HERO TEXT ===== */
+        .hero-title {
+            text-align: center;
+            color: white;
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .hero-subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+            font-size: 16px;
+            margin-bottom: 35px;
+        }
+
+        /* ===== GLASS CARD ===== */
         .login-card {
             background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
             padding: 45px;
             border-radius: 18px;
             border: 1px solid rgba(255, 255, 255, 0.12);
             box-shadow: 0 8px 40px rgba(0,0,0,0.35);
-        }
-
-        /* ===== TITLE ===== */
-        .login-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 10px;
+            width: 100%;
         }
 
         /* ===== INPUT ===== */
@@ -86,16 +99,22 @@ def login():
             padding: 12px;
             font-weight: 600;
             font-size: 15px;
-            box-shadow: 0 0 15px rgba(99,102,241,0.6);
+            box-shadow: 0 0 18px rgba(99,102,241,0.7);
             transition: 0.3s;
         }
 
         .stButton button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 0 25px rgba(34,211,238,0.9);
+            box-shadow: 0 0 28px rgba(34,211,238,0.95);
         }
 
         </style>
+    """, unsafe_allow_html=True)
+
+    # ===== HERO TEXT =====
+    st.markdown("""
+        <div class='hero-title'>Welcome Back!</div>
+        <div class='hero-subtitle'>Sign in to continue to Hexamind</div>
     """, unsafe_allow_html=True)
 
     col1, col2 = st.columns([1.2, 1])
@@ -106,11 +125,9 @@ def login():
         st.image("login.png", width=380)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # ===== RIGHT LOGIN =====
+    # ===== RIGHT LOGIN CARD =====
     with col2:
         st.markdown("<div class='login-card'>", unsafe_allow_html=True)
-
-        st.markdown("<div class='login-title'>🔐 LOGIN</div>", unsafe_allow_html=True)
 
         user = st.text_input("User Name")
         pwd = st.text_input("Password", type="password")
@@ -123,6 +140,16 @@ def login():
                 st.error("Invalid credentials")
 
         st.markdown("</div>", unsafe_allow_html=True)
+
+
+# ===== APP FLOW =====
+if "login" not in st.session_state:
+    st.session_state["login"] = False
+
+if not st.session_state["login"]:
+    login()
+else:
+    st.success("Login berhasil bro 😎")
 
 # =========================
 # LOGOUT BUTTON
@@ -334,6 +361,7 @@ if mode == "Manual Input":
         st.warning("Feature importance could not be extracted.")
 
         st.text(e)
+
 
 
 
