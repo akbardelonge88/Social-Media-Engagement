@@ -61,7 +61,7 @@ def login():
         }
 
         .login-card {
-            background: rgba(255, 255, 255, 0.08);
+            background: transparent;
             backdrop-filter: blur(14px);
             padding: 45px;
             border-radius: 18px;
@@ -318,6 +318,7 @@ if mode == "Manual Input":
     except Exception as e:
         st.warning("Feature importance could not be extracted.")
         st.text(e)
+
 
 
 
