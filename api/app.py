@@ -15,39 +15,132 @@ if "login" not in st.session_state:
     st.session_state["login"] = False
 
 # =========================
-# LOGIN PAGE
+# LOGIN FUNCTION
 # =========================
 def login():
 
     st.markdown("""
-    <style>
-    header {visibility: hidden;}
-    .stApp {
-        background: linear-gradient(135deg, #0f172a, #1e293b, #020617);
-    }
-    .hero-title {text-align:center;color:white;font-size:42px;font-weight:700;}
-    .hero-subtitle {text-align:center;color:rgba(255,255,255,0.6);}
-    </style>
+        <style>
+
+        header {visibility: hidden;}
+        [data-testid="stHeader"] {display: none;}
+
+        .stApp {
+            background: linear-gradient(135deg, #0f172a, #1e293b, #020617);
+            background-attachment: fixed;
+        }
+
+        main > div {
+         padding-top: 0rem;
+         padding-bottom: 0rem;
+        }
+
+        .block-container {
+            padding-top: 0.5rem;
+            padding-bottom: 0rem;
+        }    
+
+        div[data-testid="column"] {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .hero-title {
+            text-align: center;
+            color: white;
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .hero-subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+            font-size: 16px;
+            margin-bottom: 35px;
+        }
+
+        .login-card {
+            background: transaparent;
+            backdrop-filter: blur(14px);
+            padding: 45px;
+            border-radius: 18px;
+            border: 1px solid transparent;
+            box-shadow: 0 8px 40px transparent;
+        }
+
+        .stTextInput input {
+            background-color: rgba(255,255,255,0.08);
+            color: black;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .stTextInput label {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .stButton button {
+            background: linear-gradient(90deg, #22d3ee, #6366f1);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px;
+            font-weight: 600;
+            box-shadow: 0 0 18px rgba(99,102,241,0.7);
+            transition: 0.3s;
+        }
+
+        .stButton button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 28px rgba(34,211,238,0.95);
+        }
+
+        </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<div class='hero-title'>Welcome Back!</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hero-subtitle'>Sign in to continue to Hexamind</div>", unsafe_allow_html=True)
+    st.markdown("""
+        <div class='hero-title'>Welcome Back!</div>
+        <div class='hero-subtitle'>Sign in to continue to Hexamind</div>
+    """, unsafe_allow_html=True)
 
-    col1, col2 = st.columns([1.2,1])
+    col1, col2 = st.columns([1.2, 1])
 
     with col1:
+        st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
         st.image("login.png", width=380)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
-        user = st.text_input("User Name")
-        pwd = st.text_input("Password", type="password")
+        st.markdown("<div class='login-card'>", unsafe_allow_html=True)
 
-        if st.button("Login", use_container_width=True):
+        user = st.text_input("User Name", key="login_user")
+        pwd = st.text_input("Password", type="password", key="login_pwd")
+
+        if st.button("Login", use_container_width=True, key="login_btn"):
             if user == "admin" and pwd == "1234":
                 st.session_state["login"] = True
                 st.rerun()
             else:
                 st.error("Invalid credentials")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# COPYRIGHT LOGIN
+    st.markdown("""
+        <div style='text-align:center;
+                    margin-top:30px;
+                    font-size:12px;
+                    color:rgba(255,255,255,0.5);'>
+            © 2026 Hexamind. All Rights Reserved
+        </div>
+    """, unsafe_allow_html=True)
 
 # =========================
 # LOGOUT BUTTON
@@ -240,9 +333,17 @@ if mode=="Upload CSV":
             st.download_button("Download Result",df.to_csv(index=False),"prediction.csv")
 
 # =========================
-# FOOTER
+# COPYRIGHT FOOTER
 # =========================
-st.markdown("<hr><center>© 2026 Hexamind</center>", unsafe_allow_html=True)
+st.markdown("""
+<hr style='margin-top:50px;margin-bottom:10px'>
+<div style='text-align:center;
+            font-size:12px;
+            color:gray;'>
+    © 2026 Hexamind. All Rights Reserved
+</div>
+""", unsafe_allow_html=True)
+
 
 
 
