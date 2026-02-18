@@ -213,75 +213,17 @@ mode = st.sidebar.radio("Choose input method", ["Manual Input", "Upload CSV"])
 # =========================
 # MANUAL INPUT
 # =========================
-if mode == "Manual Input":
-
-    st.header("Manual Input Form")
-
-    ordered_cols = [
-        "day_of_week","hour","platform","text_length",
-        "topic_category","hashtag_count","emotion_type",
-        "mention_count","campaign_phase","sentiment_score",
-        "impressions","toxicity_score","month"
-    ]
-
-    col_left, col_right = st.columns(2)
-    input_data = {}
-
-    for i, col in enumerate(ordered_cols):
-
-        target_col = col_left if i % 2 == 0 else col_right
-
-        with target_col:
-
-            # ======================
-            # OBJECT → SELECTBOX
-            # ======================
-            if col in category_map:
-                input_data[col] = st.selectbox(col, category_map[col])
-
-            # ======================
-            # INTEGER INPUT
-            # ======================
-            elif col in ["hour"]:
-                input_data[col] = st.number_input(
-                    col, min_value=0, max_value=24, step=1, format="%d"
-                )
-
-            elif col in ["month"]:
-                input_data[col] = st.number_input(
-                    col, min_value=1, max_value=12, step=1, format="%d"
-                )
-
-            elif col in ["text_length","hashtag_count","mention_count","impressions"]:
-                input_data[col] = st.number_input(
-                    col, min_value=0, step=1, format="%d"
-                )
-
-            # ======================
-            # FLOAT INPUT
-            # ======================
-            elif col in ["sentiment_score","toxicity_score"]:
-                input_data[col] = st.number_input(
-                    col, value=0.0, step=0.01, format="%.4f"
-                )
-
-            # ======================
-            # DEFAULT (fallback)
-            # ======================
-            else:
-                input_data[col] = st.number_input(col, value=0.0)
-
-    if st.button("Predict"):
-        df = pd.DataFrame([input_data])
-        pred = model.predict(df)[0]
-        st.success(f"Predicted Value: {round(float(pred),4)}")
-
 def validate_csv(df, all_cols, category_map):
 
     errors = []
 
     # ======================
-    # CHECK KOLOM WAJIB
+    # STRIP SPACES HEADER
+    # ======================
+    df.columns = df.columns.str.strip()
+
+    # ======================
+    # CHECK KOLOM
     # ======================
     missing_cols = [c for c in all_cols if c not in df.columns]
     extra_cols = [c for c in df.columns if c not in all_cols]
@@ -296,16 +238,32 @@ def validate_csv(df, all_cols, category_map):
         return errors
 
     # ======================
-    # CHECK KATEGORI VALID
+    # TRIM STRING VALUE
+    # ======================
+    for col in df.select_dtypes(include="object").columns:
+        df[col] = df[col].astype(str).str.strip()
+
+    # ======================
+    # CHECK NULL
+    # ======================
+    null_counts = df.isna().sum()
+    null_cols = null_counts[null_counts > 0]
+
+    if len(null_cols) > 0:
+        errors.append(f"Null values detected in: {list(null_cols.index)}")
+
+    # ======================
+    # CHECK CATEGORY VALID
     # ======================
     for col, valid_cats in category_map.items():
         if col in df.columns:
-            invalid = df[~df[col].isin(valid_cats)][col].unique()
-            if len(invalid) > 0:
-                errors.append(f"{col} has invalid values: {list(invalid)}")
+            invalid_rows = df[~df[col].isin(valid_cats)]
+            if not invalid_rows.empty:
+                bad_vals = invalid_rows[col].unique().tolist()
+                errors.append(f"{col} invalid values: {bad_vals[:5]}")
 
     # ======================
-    # CHECK NUMERIC TYPE
+    # FORCE NUMERIC CONVERSION
     # ======================
     numeric_cols = [
         "hour","text_length","hashtag_count","mention_count",
@@ -314,19 +272,22 @@ def validate_csv(df, all_cols, category_map):
 
     for col in numeric_cols:
         if col in df.columns:
-            if not pd.api.types.is_numeric_dtype(df[col]):
-                errors.append(f"{col} must be numeric")
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+            if df[col].isna().any():
+                errors.append(f"{col} contains non-numeric values")
 
     # ======================
     # CHECK RANGE
     # ======================
     if "hour" in df.columns:
-        if ((df["hour"] < 0) | (df["hour"] > 24)).any():
-            errors.append("hour must be between 0 and 24")
+        bad = df[(df["hour"] < 0) | (df["hour"] > 24)]
+        if not bad.empty:
+            errors.append(f"hour out of range at rows: {bad.index.tolist()[:5]}")
 
     if "month" in df.columns:
-        if ((df["month"] < 1) | (df["month"] > 12)).any():
-            errors.append("month must be between 1 and 12")
+        bad = df[(df["month"] < 1) | (df["month"] > 12)]
+        if not bad.empty:
+            errors.append(f"month out of range at rows: {bad.index.tolist()[:5]}")
 
     return errors
 
@@ -398,6 +359,7 @@ st.markdown("""
     © 2026 Hexamind. All Rights Reserved
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
