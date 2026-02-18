@@ -319,7 +319,7 @@ if mode=="Upload CSV":
                 st.write("-",e)
             st.stop()
 
-        if st.button("Run Prediction"):
+        if st.button("🚀 Run Prediction"):
             preds = model.predict(df)
             df["Prediction"] = preds
             st.success("Prediction done")
@@ -343,6 +343,7 @@ st.markdown("""
     © 2026 Hexamind. All Rights Reserved
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
