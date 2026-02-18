@@ -15,132 +15,39 @@ if "login" not in st.session_state:
     st.session_state["login"] = False
 
 # =========================
-# LOGIN FUNCTION
+# LOGIN PAGE
 # =========================
 def login():
 
     st.markdown("""
-        <style>
-
-        header {visibility: hidden;}
-        [data-testid="stHeader"] {display: none;}
-
-        .stApp {
-            background: linear-gradient(135deg, #0f172a, #1e293b, #020617);
-            background-attachment: fixed;
-        }
-
-        main > div {
-         padding-top: 0rem;
-         padding-bottom: 0rem;
-        }
-
-        .block-container {
-            padding-top: 0.5rem;
-            padding-bottom: 0rem;
-        }    
-
-        div[data-testid="column"] {
-            display: flex;
-            align-items: center;
-        }
-
-        .logo-container {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-        }
-
-        .hero-title {
-            text-align: center;
-            color: white;
-            font-size: 42px;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .hero-subtitle {
-            text-align: center;
-            color: rgba(255,255,255,0.6);
-            font-size: 16px;
-            margin-bottom: 35px;
-        }
-
-        .login-card {
-            background: transaparent;
-            backdrop-filter: blur(14px);
-            padding: 45px;
-            border-radius: 18px;
-            border: 1px solid transparent;
-            box-shadow: 0 8px 40px transparent;
-        }
-
-        .stTextInput input {
-            background-color: rgba(255,255,255,0.08);
-            color: black;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.15);
-        }
-
-        .stTextInput label {
-            color: rgba(255,255,255,0.7);
-        }
-
-        .stButton button {
-            background: linear-gradient(90deg, #22d3ee, #6366f1);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 12px;
-            font-weight: 600;
-            box-shadow: 0 0 18px rgba(99,102,241,0.7);
-            transition: 0.3s;
-        }
-
-        .stButton button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 28px rgba(34,211,238,0.95);
-        }
-
-        </style>
+    <style>
+    header {visibility: hidden;}
+    .stApp {
+        background: linear-gradient(135deg, #0f172a, #1e293b, #020617);
+    }
+    .hero-title {text-align:center;color:white;font-size:42px;font-weight:700;}
+    .hero-subtitle {text-align:center;color:rgba(255,255,255,0.6);}
+    </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("""
-        <div class='hero-title'>Welcome Back!</div>
-        <div class='hero-subtitle'>Sign in to continue to Hexamind</div>
-    """, unsafe_allow_html=True)
+    st.markdown("<div class='hero-title'>Welcome Back!</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hero-subtitle'>Sign in to continue to Hexamind</div>", unsafe_allow_html=True)
 
-    col1, col2 = st.columns([1.2, 1])
+    col1, col2 = st.columns([1.2,1])
 
     with col1:
-        st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
         st.image("login.png", width=380)
-        st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
-        st.markdown("<div class='login-card'>", unsafe_allow_html=True)
+        user = st.text_input("User Name")
+        pwd = st.text_input("Password", type="password")
 
-        user = st.text_input("User Name", key="login_user")
-        pwd = st.text_input("Password", type="password", key="login_pwd")
-
-        if st.button("Login", use_container_width=True, key="login_btn"):
+        if st.button("Login", use_container_width=True):
             if user == "admin" and pwd == "1234":
                 st.session_state["login"] = True
                 st.rerun()
             else:
                 st.error("Invalid credentials")
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-# COPYRIGHT LOGIN
-    st.markdown("""
-        <div style='text-align:center;
-                    margin-top:30px;
-                    font-size:12px;
-                    color:rgba(255,255,255,0.5);'>
-            © 2026 Hexamind. All Rights Reserved
-        </div>
-    """, unsafe_allow_html=True)
 
 # =========================
 # LOGOUT BUTTON
@@ -173,21 +80,15 @@ st.title("🤖 Engagement Prediction App (Regression)")
 # INSPECT PIPELINE
 # =========================
 def inspect_pipeline(model):
-
     numeric_cols = []
     categorical_cols = []
     category_map = {}
 
     if isinstance(model, Pipeline):
-        for step_name, step in model.steps:
+        for _, step in model.steps:
             if isinstance(step, ColumnTransformer):
-                for name, transformer, cols in step.transformers_:
-
-                    if isinstance(transformer, Pipeline):
-                        last = transformer.steps[-1][1]
-                    else:
-                        last = transformer
-
+                for _, transformer, cols in step.transformers_:
+                    last = transformer.steps[-1][1] if isinstance(transformer, Pipeline) else transformer
                     if hasattr(last, "categories_"):
                         categorical_cols.extend(cols)
                         for c, cats in zip(cols, last.categories_):
@@ -205,160 +106,144 @@ else:
     all_cols = numeric_cols + categorical_cols
 
 # =========================
-# SIDEBAR MODE
+# CSV VALIDATION ENGINE
 # =========================
-st.sidebar.header("Input Mode")
-mode = st.sidebar.radio("Choose input method", ["Manual Input", "Upload CSV"])
-
-# =========================
-# MANUAL INPUT
-# =========================
-def validate_csv(df, all_cols, category_map):
+def validate_csv(df):
 
     errors = []
 
-    # ======================
-    # STRIP SPACES HEADER
-    # ======================
     df.columns = df.columns.str.strip()
 
-    # ======================
-    # CHECK KOLOM
-    # ======================
-    missing_cols = [c for c in all_cols if c not in df.columns]
-    extra_cols = [c for c in df.columns if c not in all_cols]
+    # check columns
+    missing = [c for c in all_cols if c not in df.columns]
+    extra = [c for c in df.columns if c not in all_cols]
 
-    if missing_cols:
-        errors.append(f"Missing columns: {missing_cols}")
-
-    if extra_cols:
-        errors.append(f"Unknown columns: {extra_cols}")
-
+    if missing:
+        errors.append(f"Missing columns: {missing}")
+    if extra:
+        errors.append(f"Unknown columns: {extra}")
     if errors:
         return errors
 
-    # ======================
-    # TRIM STRING VALUE
-    # ======================
-    for col in df.select_dtypes(include="object").columns:
+    # strip string values
+    for col in df.select_dtypes(include="object"):
         df[col] = df[col].astype(str).str.strip()
 
-    # ======================
-    # CHECK NULL
-    # ======================
-    null_counts = df.isna().sum()
-    null_cols = null_counts[null_counts > 0]
+    # null check
+    nulls = df.isna().sum()
+    if (nulls > 0).any():
+        errors.append(f"Null values detected in {list(nulls[nulls>0].index)}")
 
-    if len(null_cols) > 0:
-        errors.append(f"Null values detected in: {list(null_cols.index)}")
+    # category check
+    for col, cats in category_map.items():
+        bad = df[~df[col].isin(cats)]
+        if not bad.empty:
+            errors.append(f"{col} invalid values {bad[col].unique().tolist()[:5]}")
 
-    # ======================
-    # CHECK CATEGORY VALID
-    # ======================
-    for col, valid_cats in category_map.items():
-        if col in df.columns:
-            invalid_rows = df[~df[col].isin(valid_cats)]
-            if not invalid_rows.empty:
-                bad_vals = invalid_rows[col].unique().tolist()
-                errors.append(f"{col} invalid values: {bad_vals[:5]}")
-
-    # ======================
-    # FORCE NUMERIC CONVERSION
-    # ======================
+    # numeric coercion
     numeric_cols = [
         "hour","text_length","hashtag_count","mention_count",
         "impressions","month","sentiment_score","toxicity_score"
     ]
 
     for col in numeric_cols:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-            if df[col].isna().any():
-                errors.append(f"{col} contains non-numeric values")
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+        if df[col].isna().any():
+            errors.append(f"{col} contains non numeric values")
 
-    # ======================
-    # CHECK RANGE
-    # ======================
-    if "hour" in df.columns:
-        bad = df[(df["hour"] < 0) | (df["hour"] > 24)]
-        if not bad.empty:
-            errors.append(f"hour out of range at rows: {bad.index.tolist()[:5]}")
+    # range check
+    if ((df["hour"]<0)|(df["hour"]>24)).any():
+        errors.append("hour must be 0–24")
 
-    if "month" in df.columns:
-        bad = df[(df["month"] < 1) | (df["month"] > 12)]
-        if not bad.empty:
-            errors.append(f"month out of range at rows: {bad.index.tolist()[:5]}")
+    if ((df["month"]<1)|(df["month"]>12)).any():
+        errors.append("month must be 1–12")
 
     return errors
 
-=========================
+# =========================
+# SIDEBAR MODE
+# =========================
+st.sidebar.header("Input Mode")
+mode = st.sidebar.radio("Choose input method", ["Manual Input","Upload CSV"])
+
+# =========================
+# MANUAL INPUT
+# =========================
+if mode == "Manual Input":
+
+    st.header("Manual Input")
+
+    ordered_cols = [
+        "day_of_week","hour","platform","text_length",
+        "topic_category","hashtag_count","emotion_type",
+        "mention_count","campaign_phase","sentiment_score",
+        "impressions","toxicity_score","month"
+    ]
+
+    col1,col2 = st.columns(2)
+    input_data = {}
+
+    for i,col in enumerate(ordered_cols):
+        tgt = col1 if i%2==0 else col2
+        with tgt:
+            if col in category_map:
+                input_data[col] = st.selectbox(col, category_map[col])
+            elif col=="hour":
+                input_data[col] = st.number_input(col,0,24,step=1)
+            elif col=="month":
+                input_data[col] = st.number_input(col,1,12,step=1)
+            elif col in ["sentiment_score","toxicity_score"]:
+                input_data[col] = st.number_input(col,step=0.01)
+            else:
+                input_data[col] = st.number_input(col,step=1)
+
+    if st.button("Predict"):
+        df = pd.DataFrame([input_data])
+        pred = model.predict(df)[0]
+        st.success(f"Predicted Value: {round(float(pred),4)}")
+
+# =========================
 # UPLOAD CSV
 # =========================
-if mode == "Upload CSV":
+if mode=="Upload CSV":
 
-    st.header("Upload CSV for Batch Prediction")
+    st.header("Upload CSV")
 
     template_df = pd.DataFrame(columns=all_cols)
-    csv_template = template_df.to_csv(index=False)
+    st.download_button("Download Template", template_df.to_csv(index=False),"template.csv")
 
-    st.download_button(
-        "⬇ Download CSV Template",
-        csv_template,
-        "template_input.csv",
-        "text/csv"
-    )
-
-    file = st.file_uploader("Upload CSV", type=["csv"])
+    file = st.file_uploader("Upload CSV",type=["csv"])
 
     if file:
         df = pd.read_csv(file)
-        st.write("Preview", df.head())
+        st.dataframe(df.head())
 
-        # ======================
-        # VALIDASI CSV
-        # ======================
-        validation_errors = validate_csv(df, all_cols, category_map)
+        errors = validate_csv(df)
 
-        if validation_errors:
-            st.error("CSV validation failed ❌")
-            for err in validation_errors:
-                st.write(f"- {err}")
+        if errors:
+            st.error("CSV validation failed")
+            for e in errors:
+                st.write("-",e)
             st.stop()
 
-        # ======================
-        # PREDICT JIKA VALID
-        # ======================
-        if st.button("🚀 Run Prediction"):
-
+        if st.button("Run Prediction"):
             preds = model.predict(df)
             df["Prediction"] = preds
-
-            st.success("Prediction done ✅")
+            st.success("Prediction done")
             st.dataframe(df)
 
-            fig, ax = plt.subplots()
-            ax.hist(preds, bins=20)
-            ax.set_title("Distribution of Predicted Values")
+            fig,ax = plt.subplots()
+            ax.hist(preds,bins=20)
+            ax.set_title("Prediction Distribution")
             st.pyplot(fig)
 
-            st.download_button(
-                "Download Result CSV",
-                df.to_csv(index=False),
-                "prediction.csv",
-                "text/csv"
-            )
-        
+            st.download_button("Download Result",df.to_csv(index=False),"prediction.csv")
+
 # =========================
-# COPYRIGHT FOOTER
+# FOOTER
 # =========================
-st.markdown("""
-<hr style='margin-top:50px;margin-bottom:10px'>
-<div style='text-align:center;
-            font-size:12px;
-            color:gray;'>
-    © 2026 Hexamind. All Rights Reserved
-</div>
-""", unsafe_allow_html=True)
+st.markdown("<hr><center>© 2026 Hexamind</center>", unsafe_allow_html=True)
+
 
 
 
