@@ -232,8 +232,42 @@ if mode == "Manual Input":
         target_col = col_left if i % 2 == 0 else col_right
 
         with target_col:
+
+            # ======================
+            # OBJECT → SELECTBOX
+            # ======================
             if col in category_map:
                 input_data[col] = st.selectbox(col, category_map[col])
+
+            # ======================
+            # INTEGER INPUT
+            # ======================
+            elif col in ["hour"]:
+                input_data[col] = st.number_input(
+                    col, min_value=0, max_value=24, step=1, format="%d"
+                )
+
+            elif col in ["month"]:
+                input_data[col] = st.number_input(
+                    col, min_value=1, max_value=12, step=1, format="%d"
+                )
+
+            elif col in ["text_length","hashtag_count","mention_count","impressions"]:
+                input_data[col] = st.number_input(
+                    col, min_value=0, step=1, format="%d"
+                )
+
+            # ======================
+            # FLOAT INPUT
+            # ======================
+            elif col in ["sentiment_score","toxicity_score"]:
+                input_data[col] = st.number_input(
+                    col, value=0.0, step=0.01, format="%.4f"
+                )
+
+            # ======================
+            # DEFAULT (fallback)
+            # ======================
             else:
                 input_data[col] = st.number_input(col, value=0.0)
 
@@ -242,7 +276,61 @@ if mode == "Manual Input":
         pred = model.predict(df)[0]
         st.success(f"Predicted Value: {round(float(pred),4)}")
 
-# =========================
+def validate_csv(df, all_cols, category_map):
+
+    errors = []
+
+    # ======================
+    # CHECK KOLOM WAJIB
+    # ======================
+    missing_cols = [c for c in all_cols if c not in df.columns]
+    extra_cols = [c for c in df.columns if c not in all_cols]
+
+    if missing_cols:
+        errors.append(f"Missing columns: {missing_cols}")
+
+    if extra_cols:
+        errors.append(f"Unknown columns: {extra_cols}")
+
+    if errors:
+        return errors
+
+    # ======================
+    # CHECK KATEGORI VALID
+    # ======================
+    for col, valid_cats in category_map.items():
+        if col in df.columns:
+            invalid = df[~df[col].isin(valid_cats)][col].unique()
+            if len(invalid) > 0:
+                errors.append(f"{col} has invalid values: {list(invalid)}")
+
+    # ======================
+    # CHECK NUMERIC TYPE
+    # ======================
+    numeric_cols = [
+        "hour","text_length","hashtag_count","mention_count",
+        "impressions","month","sentiment_score","toxicity_score"
+    ]
+
+    for col in numeric_cols:
+        if col in df.columns:
+            if not pd.api.types.is_numeric_dtype(df[col]):
+                errors.append(f"{col} must be numeric")
+
+    # ======================
+    # CHECK RANGE
+    # ======================
+    if "hour" in df.columns:
+        if ((df["hour"] < 0) | (df["hour"] > 24)).any():
+            errors.append("hour must be between 0 and 24")
+
+    if "month" in df.columns:
+        if ((df["month"] < 1) | (df["month"] > 12)).any():
+            errors.append("month must be between 1 and 12")
+
+    return errors
+
+=========================
 # UPLOAD CSV
 # =========================
 if mode == "Upload CSV":
@@ -265,12 +353,26 @@ if mode == "Upload CSV":
         df = pd.read_csv(file)
         st.write("Preview", df.head())
 
+        # ======================
+        # VALIDASI CSV
+        # ======================
+        validation_errors = validate_csv(df, all_cols, category_map)
+
+        if validation_errors:
+            st.error("CSV validation failed ❌")
+            for err in validation_errors:
+                st.write(f"- {err}")
+            st.stop()
+
+        # ======================
+        # PREDICT JIKA VALID
+        # ======================
         if st.button("🚀 Run Prediction"):
 
             preds = model.predict(df)
             df["Prediction"] = preds
 
-            st.success("Prediction done")
+            st.success("Prediction done ✅")
             st.dataframe(df)
 
             fig, ax = plt.subplots()
@@ -284,56 +386,6 @@ if mode == "Upload CSV":
                 "prediction.csv",
                 "text/csv"
             )
-# =========================
-# FEATURE IMPORTANCE (ONLY MANUAL INPUT PAGE)
-# =========================
-if mode == "Manual Input":
-
-    st.header("Feature Importance")
-
-    try:
-        # ambil model terakhir
-        if hasattr(model, "named_steps"):
-            final_model = list(model.named_steps.values())[-1]
-        else:
-            final_model = model
-
-        if hasattr(final_model, "feature_importances_"):
-
-            importance = final_model.feature_importances_
-
-            # ambil nama fitur dari pipeline kalau ada
-            feature_names = None
-
-            if hasattr(model, "named_steps"):
-                for step in model.named_steps.values():
-                    if hasattr(step, "get_feature_names_out"):
-                        feature_names = step.get_feature_names_out()
-                        break
-
-            if feature_names is None:
-                feature_names = [f"feature_{i}" for i in range(len(importance))]
-
-            fi = pd.DataFrame({
-                "Feature": feature_names,
-                "Importance": importance
-            }).sort_values("Importance", ascending=False).head(20)
-
-            fig, ax = plt.subplots(figsize=(8,6))
-            ax.barh(fi["Feature"], fi["Importance"])
-            ax.invert_yaxis()
-            ax.set_title("Top Feature Importance")
-            ax.set_xlabel("Importance Score")
-            plt.tight_layout()
-
-            st.pyplot(fig)
-
-        else:
-            st.info("Model does not support feature importance.")
-
-    except Exception as e:
-        st.warning("Feature importance could not be extracted.")
-        st.text(e)
         
 # =========================
 # COPYRIGHT FOOTER
@@ -346,6 +398,7 @@ st.markdown("""
     © 2026 Hexamind. All Rights Reserved
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
